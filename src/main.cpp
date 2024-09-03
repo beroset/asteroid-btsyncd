@@ -24,9 +24,6 @@
 #include <QtBluetooth/qlowenergyservice.h>
 #include <QtBluetooth/qlowenergyservicedata.h>
 
-#include <QBluetoothUuid>
-#include <QLowEnergyService>
-#include <QLowEnergyCharacteristicData>
 
 #include <QtCore/qbytearray.h>
 #include <QtCore/qcoreapplication.h>
@@ -36,69 +33,13 @@
 #include <QtCore/qtimer.h>
 #include <QTranslator>
 
-class BtService {
-public:
-    BtService();
-    const QLowEnergyServiceData& service() const;
-    void run(QLowEnergyService& service);
-private:
-    QLowEnergyCharacteristicData charData;
-    QLowEnergyServiceData serviceData;
-};
+#include "heartrate.h"
 
-BtService::BtService() 
-{
-    charData.setUuid(QBluetoothUuid::HeartRateMeasurement);
-    charData.setValue(QByteArray(2, 0));
-    charData.setProperties(QLowEnergyCharacteristic::Notify | QLowEnergyCharacteristic::Read);
-    const QLowEnergyDescriptorData clientConfig(QBluetoothUuid::ClientCharacteristicConfiguration,
-                                                QByteArray(2, 0));
-    charData.addDescriptor(clientConfig);
-
-    serviceData.setType(QLowEnergyServiceData::ServiceTypePrimary);
-    serviceData.setUuid(QBluetoothUuid::HeartRate);
-    serviceData.addCharacteristic(charData);
-}
-
-const QLowEnergyServiceData& BtService::service() const
-{
-    return serviceData;
-}
-
-void BtService::run(QLowEnergyService& service)
-{
-    QTimer heartbeatTimer;
-    quint8 currentHeartRate = 60;
-    enum ValueChange { ValueUp, ValueDown } valueChange = ValueUp;
-    const auto heartbeatProvider = [&service, &currentHeartRate, &valueChange]() {
-        QByteArray value;
-        value.append(char(0));
-        value.append(char(currentHeartRate)); // Actual value.
-        QLowEnergyCharacteristic characteristic
-                = service.characteristic(QBluetoothUuid::HeartRateMeasurement);
-        Q_ASSERT(characteristic.isValid());
-        service.writeCharacteristic(characteristic, value); // Potentially causes notification.
-        if (currentHeartRate == 60)
-            valueChange = ValueUp;
-        else if (currentHeartRate == 100)
-            valueChange = ValueDown;
-        if (valueChange == ValueUp)
-            ++currentHeartRate;
-        else
-            --currentHeartRate;
-    };
-    QObject::connect(&heartbeatTimer, &QTimer::timeout, heartbeatProvider);
-    heartbeatTimer.start(1000);
-}
 
 int main(int argc, char *argv[])
 {
     //QLoggingCategory::setFilterRules(QStringLiteral("qt.bluetooth* = true"));
-#ifndef Q_OS_ANDROID
     QCoreApplication app(argc, argv);
-#else
-    QGuiApplication app(argc, argv);
-#endif
 
     //! [Advertising Data]
     QLowEnergyAdvertisingData advertisingData;

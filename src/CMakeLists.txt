@@ -1,8 +1,10 @@
 set(SRC
 	main.cpp
+        heartrate.cpp
 )
 
 set(HEADERS
+        heartrate.h
 )
 
 add_executable(asteroid-btsyncd ${SRC} ${HEADERS})
