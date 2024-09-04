@@ -14,64 +14,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+#include <QCoreApplication>
+#include "Device.h"
 
-#include <QtBluetooth/qlowenergyadvertisingdata.h>
-#include <QtBluetooth/qlowenergyadvertisingparameters.h>
-#include <QtBluetooth/qlowenergycharacteristic.h>
-#include <QtBluetooth/qlowenergycharacteristicdata.h>
-#include <QtBluetooth/qlowenergydescriptordata.h>
-#include <QtBluetooth/qlowenergycontroller.h>
-#include <QtBluetooth/qlowenergyservice.h>
-#include <QtBluetooth/qlowenergyservicedata.h>
-
-
-#include <QtCore/qbytearray.h>
-#include <QtCore/qcoreapplication.h>
-#include <QtCore/qlist.h>
-#include <QtCore/qloggingcategory.h>
-#include <QtCore/qscopedpointer.h>
-#include <QtCore/qtimer.h>
-#include <QTranslator>
-
-#include "heartrate.h"
-
-
-int main(int argc, char *argv[])
-{
-    //QLoggingCategory::setFilterRules(QStringLiteral("qt.bluetooth* = true"));
+int main(int argc, char *argv[]) {
     QCoreApplication app(argc, argv);
 
-    //! [Advertising Data]
-    QLowEnergyAdvertisingData advertisingData;
-    advertisingData.setDiscoverability(QLowEnergyAdvertisingData::DiscoverabilityGeneral);
-    advertisingData.setIncludePowerLevel(true);
-    advertisingData.setLocalName("catfish3");
-    advertisingData.setServices(QList<QBluetoothUuid>() << QBluetoothUuid{QString{"00000000-0000-0000-0000-00a57e401d05"}});
-    //! [Advertising Data]
-
-    //! [Service Data]
-    BtService svc;
-    //! [Service Data]
-
-    //! [Start Advertising]
-    const QScopedPointer<QLowEnergyController> leController(QLowEnergyController::createPeripheral());
-    QScopedPointer<QLowEnergyService> service(leController->addService(svc.service()));
-    leController->startAdvertising(QLowEnergyAdvertisingParameters(), advertisingData,
-                                   advertisingData);
-    //! [Start Advertising]
-
-    //! [Provide Heartbeat]
-    svc.run(*service);
-    //! [Provide Heartbeat]
-
-    auto reconnect = [&leController, advertisingData, &service, &svc]()
-    {
-        service.reset(leController->addService(svc.service()));
-        if (!service.isNull())
-            leController->startAdvertising(QLowEnergyAdvertisingParameters(),
-                                           advertisingData, advertisingData);
-    };
-    QObject::connect(leController.data(), &QLowEnergyController::disconnected, reconnect);
+    Device device;
 
     return app.exec();
 }
+
