@@ -10,9 +10,10 @@ BluetoothService::BluetoothService(QObject *parent) : QObject(parent) {
     connect(m_controller, QOverload<QLowEnergyController::Error>::of(&QLowEnergyController::error), this, &BluetoothService::onErrorOccurred);
 }
 
-void BluetoothService::addService(const QLowEnergyServiceData &serviceData) {
+QLowEnergyService* BluetoothService::addService(const QLowEnergyServiceData &serviceData) {
     QLowEnergyService *service = m_controller->addService(serviceData);
     m_services.append(service);
+    return service;
 }
 
 void BluetoothService::startAdvertising(const QString &localName) {

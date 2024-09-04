@@ -12,7 +12,7 @@ class BluetoothService : public QObject {
 
 public:
     explicit BluetoothService(QObject *parent = nullptr);
-    void addService(const QLowEnergyServiceData &serviceData);
+    QLowEnergyService* addService(const QLowEnergyServiceData &serviceData);
     void startAdvertising(const QString &localName);
 
 private slots:

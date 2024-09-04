@@ -5,7 +5,7 @@
 
 HeartRateService::HeartRateService(BluetoothService &bluetoothService, QObject *parent) : QObject(parent) {
     QLowEnergyServiceData serviceData = createHeartRateServiceData();
-    bluetoothService.addService(serviceData);
+    m_service = bluetoothService.addService(serviceData);
 }
 
 QLowEnergyServiceData HeartRateService::createHeartRateServiceData() {

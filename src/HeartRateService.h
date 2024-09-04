@@ -11,9 +11,11 @@ class HeartRateService : public QObject {
 
 public:
     explicit HeartRateService(BluetoothService &bluetoothService, QObject *parent = nullptr);
+    QLowEnergyService* service() const;
 
 private:
     QLowEnergyServiceData createHeartRateServiceData();
+    QLowEnergyService *m_service;
 };
 
 #endif // HEARTRATESERVICE_H

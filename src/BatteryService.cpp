@@ -1,17 +1,28 @@
 #include "BatteryService.h"
+#include <batterystatus.h>
 #include <QtBluetooth/QBluetoothUuid>
 #include <QtBluetooth/QLowEnergyCharacteristicData>
 #include <QtBluetooth/QLowEnergyDescriptorData>
 
 BatteryService::BatteryService(BluetoothService &bluetoothService, QObject *parent) : QObject(parent) {
+    m_battery = new BatteryStatus(this);
     QLowEnergyServiceData serviceData = createBatteryServiceData();
-    bluetoothService.addService(serviceData);
+    connect(m_battery, &BatteryStatus::chargePercentageChanged,
+            this, &BatteryService::onBatteryPercentageChanged);
+    m_service = bluetoothService.addService(serviceData);
+}
+
+void BatteryService::onBatteryPercentageChanged(int percentage)
+{
+    QLowEnergyCharacteristic characteristic = m_service->characteristic(QBluetoothUuid::BatteryLevel);
+    Q_ASSERT(characteristic.isValid());
+    m_service->writeCharacteristic(characteristic, QByteArray(1, percentage));
 }
 
 QLowEnergyServiceData BatteryService::createBatteryServiceData() {
     QLowEnergyCharacteristicData batteryLevelData;
     batteryLevelData.setUuid(QBluetoothUuid::BatteryLevel);
-    batteryLevelData.setValue(QByteArray(1, 50)); // 50% battery level
+    batteryLevelData.setValue(QByteArray(1, 100));
     batteryLevelData.setProperties(QLowEnergyCharacteristic::Read | QLowEnergyCharacteristic::Notify);
 
     QLowEnergyDescriptorData cccd(QBluetoothUuid::ClientCharacteristicConfiguration, QByteArray(2, 0));
