@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
     advertisingData.setDiscoverability(QLowEnergyAdvertisingData::DiscoverabilityGeneral);
     advertisingData.setIncludePowerLevel(true);
     advertisingData.setLocalName("catfish3");
-    advertisingData.setServices(QList<QBluetoothUuid>() << QBluetoothUuid::HeartRate);
+    advertisingData.setServices(QList<QBluetoothUuid>() << QBluetoothUuid{QString{"00000000-0000-0000-0000-00a57e401d05"}});
     //! [Advertising Data]
 
     //! [Service Data]
