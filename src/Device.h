@@ -5,6 +5,7 @@
 #include "BluetoothService.h"
 #include "BatteryService.h"
 #include "HeartRateService.h"
+#include "NotificationService.h"
 
 class Device : public QObject {
     Q_OBJECT
@@ -16,6 +17,7 @@ private:
     BluetoothService m_bluetoothService;
     BatteryService m_batteryService;
     HeartRateService m_heartRateService;
+    NotificationService m_notificationService;
 };
 
 #endif // DEVICE_H

@@ -4,6 +4,7 @@ set(SRC
         BluetoothService.cpp
         HeartRateService.cpp
         BatteryService.cpp
+        NotificationService.cpp
 )
 
 set(HEADERS
@@ -11,6 +12,7 @@ set(HEADERS
         BluetoothService.h
         HeartRateService.h
         BatteryService.h
+        NotificationService.h
 )
 
 add_executable(asteroid-btsyncd ${SRC} ${HEADERS})
