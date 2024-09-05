@@ -7,6 +7,8 @@
 #include <QFile>
 #include <QDebug>
 
+#include <thread>
+
 static const QBluetoothUuid ScreenshotServiceUuid{QString{"00006071-0000-0000-0000-00A57E401D05"}};
 static const QBluetoothUuid ScreenshotRequestUuid{QString{"00006001-0000-0000-0000-00A57E401D05"}};
 static const QBluetoothUuid ScreenshotContentUuid{QString{"00006002-0000-0000-0000-00A57E401D05"}};
@@ -56,8 +58,11 @@ void ScreenshotService::onCharacteristicWritten(const QLowEnergyCharacteristic &
         m_service->writeCharacteristic(characteristic, m_value);
 
         while (!f.atEnd()) {
-            m_value = f.read(20);
+            static const unsigned mtu{20};
+            m_value = f.read(mtu);
             m_service->writeCharacteristic(characteristic, m_value);
+            using namespace std::chrono_literals;
+            std::this_thread::sleep_for(mtu * 180us);
         }
         f.close();
     }
