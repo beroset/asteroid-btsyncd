@@ -19,6 +19,7 @@ public:
 
 private slots:
     void onNotificationClosed(uint replacesId, uint);
+    void onCharacteristicWritten(const QLowEnergyCharacteristic &characteristic, const QByteArray &value);
 
 private:
     QLowEnergyServiceData createNotificationServiceData();

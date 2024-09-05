@@ -15,9 +15,11 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include <QCoreApplication>
+#include <QDebug>
 #include "Device.h"
 
 int main(int argc, char *argv[]) {
+    //QLoggingCategory::setFilterRules(QStringLiteral("qt.bluetooth* = true;*.debug=true"));
     QCoreApplication app(argc, argv);
 
     Device device;

@@ -3,6 +3,8 @@
 #include <QtBluetooth/QLowEnergyAdvertisingParameters>
 #include <QDebug>
 
+static const QBluetoothUuid AsteroidOSUuid{QString{"00000000-0000-0000-0000-00a57e401d05"}};
+
 BluetoothService::BluetoothService(QObject *parent) : QObject(parent) {
     m_controller = QLowEnergyController::createPeripheral(this);
 
@@ -21,12 +23,15 @@ void BluetoothService::startAdvertising(const QString &localName) {
     advertisingData.setDiscoverability(QLowEnergyAdvertisingData::DiscoverabilityGeneral);
     advertisingData.setIncludePowerLevel(true);
     advertisingData.setLocalName(localName);
-
+#if 0
     QList<QBluetoothUuid> serviceUuids;
     for (const auto &service : m_services) {
         serviceUuids.append(service->serviceUuid());
     }
     advertisingData.setServices(serviceUuids);
+#else
+    advertisingData.setServices(QList<QBluetoothUuid>() << AsteroidOSUuid);
+#endif
 
     QLowEnergyAdvertisingParameters advertisingParameters;
     advertisingParameters.setMode(QLowEnergyAdvertisingParameters::AdvInd);
