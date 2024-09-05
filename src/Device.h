@@ -8,6 +8,7 @@
 #include "NotificationService.h"
 #include "TimeService.h"
 #include "MediaService.h"
+#include "ScreenshotService.h"
 
 class Device : public QObject {
     Q_OBJECT
@@ -22,6 +23,7 @@ private:
     NotificationService m_notificationService;
     TimeService m_timeService;
     MediaService m_mediaService;
+    ScreenshotService m_screenshotService;
 };
 
 #endif // DEVICE_H
