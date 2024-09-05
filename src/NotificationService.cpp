@@ -19,6 +19,8 @@ NotificationService::NotificationService(BluetoothService &bluetoothService, QOb
     QLowEnergyServiceData serviceData = createNotificationServiceData();
     m_service = bluetoothService.addService(serviceData);
     connect(m_service, &QLowEnergyService::characteristicChanged, this, &NotificationService::onCharacteristicWritten);
+    QDBusConnection::sessionBus().connect(NOTIFICATIONS_SERVICE_NAME, NOTIFICATIONS_PATH_BASE,
+        NOTIFICATIONS_MAIN_IFACE, "NotificationClosed", this, SLOT(onNotificationClosed(uint, uint)));
 }
 
 QLowEnergyService* NotificationService::service() const {
@@ -27,11 +29,9 @@ QLowEnergyService* NotificationService::service() const {
 
 void NotificationService::onNotificationClosed(uint replacesId, uint)
 {
-#if 0
-    QLowEnergyCharacteristic characteristic = m_service->characteristic(QBluetoothUuid::NotificationLevel);
-    Q_ASSERT(characteristic.isValid());
-    m_service->writeCharacteristic(characteristic, QByteArray(1, percentage));
-#endif
+    int id = mKnownAndroidNotifs.key(replacesId, 0);
+    if(id)
+        mKnownAndroidNotifs.remove(id);
 }
 
 void NotificationService::onCharacteristicWritten(const QLowEnergyCharacteristic &characteristic, const QByteArray &value) {
@@ -138,6 +138,9 @@ QLowEnergyServiceData NotificationService::createNotificationServiceData() {
     QLowEnergyCharacteristicData notificationFeedbackData;
     notificationFeedbackData.setUuid(NotificationFeedbackUuid);
     notificationFeedbackData.setProperties(QLowEnergyCharacteristic::Notify);
+
+    QLowEnergyDescriptorData cccd(QBluetoothUuid::ClientCharacteristicConfiguration, QByteArray(2, 0));
+    notificationFeedbackData.addDescriptor(cccd);
 
     QLowEnergyServiceData serviceData;
     serviceData.setType(QLowEnergyServiceData::ServiceTypePrimary);

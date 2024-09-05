@@ -43,9 +43,14 @@ void TimeService::onCharacteristicWritten(const QLowEnergyCharacteristic &charac
 QLowEnergyServiceData TimeService::createTimeServiceData() {
     QLowEnergyCharacteristicData timeUpdateData;
     timeUpdateData.setUuid(TimeUpdateUuid);
-    timeUpdateData.setProperties(QLowEnergyCharacteristic::Write);
+    timeUpdateData.setProperties(QLowEnergyCharacteristic::WriteNoResponse);
     timeUpdateData.setValue(QByteArray()); // empty value initially
-
+#ifndef QT_IS_BUGGY
+    // this should not be necessary, but without it, the characteristic is never marked valid 
+    // on the receiving side.
+    QLowEnergyDescriptorData cccd(QBluetoothUuid::ClientCharacteristicConfiguration, QByteArray(2, 0));
+    timeUpdateData.addDescriptor(cccd);
+#endif
     QLowEnergyServiceData serviceData;
     serviceData.setType(QLowEnergyServiceData::ServiceTypePrimary);
     serviceData.setUuid(TimeServiceUuid);
