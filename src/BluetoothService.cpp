@@ -21,7 +21,7 @@ QLowEnergyService* BluetoothService::addService(const QLowEnergyServiceData &ser
 void BluetoothService::startAdvertising(const QString &localName) {
     QLowEnergyAdvertisingData advertisingData;
     advertisingData.setDiscoverability(QLowEnergyAdvertisingData::DiscoverabilityGeneral);
-    advertisingData.setIncludePowerLevel(true);
+    advertisingData.setIncludePowerLevel(false);
     advertisingData.setLocalName(localName);
 #if 0
     QList<QBluetoothUuid> serviceUuids;
@@ -33,7 +33,7 @@ void BluetoothService::startAdvertising(const QString &localName) {
     advertisingData.setServices(QList<QBluetoothUuid>() << AsteroidOSUuid);
 #endif
 
-    QLowEnergyAdvertisingParameters advertisingParameters;
+    QLowEnergyAdvertisingParameters advertisingParameters{};
     advertisingParameters.setMode(QLowEnergyAdvertisingParameters::AdvInd);
 
     m_controller->startAdvertising(advertisingParameters, advertisingData, advertisingData);
