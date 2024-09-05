@@ -15,6 +15,15 @@ public:
     explicit MediaService(BluetoothService &bluetoothService, QObject *parent = nullptr);
     QLowEnergyService* service() const;
 
+public slots:
+    void pauseRequested();
+    void playRequested();
+    void playPauseRequested();
+    void stopRequested();
+    void nextRequested();
+    void previousRequested();
+    void volumeRequested(double volume);
+
 private slots:
     void onCharacteristicWritten(const QLowEnergyCharacteristic &characteristic, const QByteArray &value);
 
