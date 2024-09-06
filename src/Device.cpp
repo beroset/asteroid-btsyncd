@@ -8,6 +8,7 @@ Device::Device(QObject *parent)
     , m_timeService(m_bluetoothService, this)
     , m_mediaService(m_bluetoothService, this)
     , m_screenshotService(m_bluetoothService, this)
+    , m_weatherService(m_bluetoothService, this)
 {
     // TODO: add code to read system name
     m_bluetoothService.startAdvertising("catfish3");
