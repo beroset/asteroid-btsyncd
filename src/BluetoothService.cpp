@@ -44,6 +44,8 @@ void BluetoothService::onControllerStateChanged(QLowEnergyController::Controller
         qDebug() << "Peripheral disconnected.";
     } else if (state == QLowEnergyController::AdvertisingState) {
         qDebug() << "Advertising started.";
+    } else {
+        qDebug() << "BluetoothService is in state " << state;
     }
 }
 
