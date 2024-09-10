@@ -13,7 +13,7 @@ Device::Device(QObject *parent)
 {
     // TODO: add code to read system name
     m_bluetoothService.startAdvertising("catfish3");
-
+#if 0
     // In this example, we assume the iPhone initiates the connection.
     setupController();
 }
@@ -43,4 +43,5 @@ void Device::onNotificationReceived(const QByteArray &data) {
 void Device::onDataSourceReceived(const QByteArray &data) {
     qDebug() << "Data source received:" << data;
     // Handle data source data here
+#endif
 }

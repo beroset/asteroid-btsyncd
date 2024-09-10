@@ -21,12 +21,12 @@ class Device : public QObject {
 
 public:
     explicit Device(QObject *parent = nullptr);
-
+#if 0
 private slots:
     void onDeviceConnected();
     void onNotificationReceived(const QByteArray &data);
     void onDataSourceReceived(const QByteArray &data);
-
+#endif
 private:
     BluetoothService m_bluetoothService;
     BatteryService m_batteryService;
@@ -40,7 +40,7 @@ private:
 
     QLowEnergyController *m_controller;
     
-    void setupController();
+    //void setupController();
 };
 
 #endif // DEVICE_H

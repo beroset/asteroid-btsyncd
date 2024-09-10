@@ -12,20 +12,26 @@ class ANCSService : public QObject {
 
 public:
     explicit ANCSService(BluetoothService &bluetoothService, QObject *parent = nullptr);
-    void connectToDevice(const QBluetoothDeviceInfo &deviceInfo);
+    QLowEnergyService* service() const;
 
+#if 0
 signals:
     void notificationReceived(const QByteArray &data);
     void dataSourceReceived(const QByteArray &data);
+#endif 
 
 private slots:
+    void checkForANCS();
+#if 0
     void onServiceDiscovered(const QBluetoothUuid &uuid);
     void onServiceStateChanged(QLowEnergyService::ServiceState state);
     void onCharacteristicChanged(const QLowEnergyCharacteristic &characteristic, const QByteArray &newValue);
     void onCharacteristicWritten(const QLowEnergyCharacteristic &characteristic, const QByteArray &value);
+#endif
 
 private:
-    QLowEnergyController *m_controller;
+    QLowEnergyService *m_service;
+#if 0
     QLowEnergyService *m_ancsService;
     QLowEnergyCharacteristic m_notificationSourceChar;
     QLowEnergyCharacteristic m_controlPointChar;
@@ -35,7 +41,7 @@ private:
     void subscribeToNotifications();
     void processNotificationSource(const QByteArray &data);
     void processDataSource(const QByteArray &data);
+#endif 
 };
-
 #endif // ANCSSERVICE_H
 
