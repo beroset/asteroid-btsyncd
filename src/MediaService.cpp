@@ -4,11 +4,7 @@
 #include <QtBluetooth/QLowEnergyDescriptorData>
 #include <QDebug>
 
-#define MEDIA_COMMAND_PREVIOUS 0x0
-#define MEDIA_COMMAND_NEXT     0x1
-#define MEDIA_COMMAND_PLAY     0x2
-#define MEDIA_COMMAND_PAUSE    0x3
-#define MEDIA_COMMAND_VOLUME   0x4
+enum MediaCommand : char { Previous = 0, Next, Play, Pause, Volume };
 
 static const QBluetoothUuid MediaServiceUuid{QString{"00007071-0000-0000-0000-00A57E401D05"}};
 static const QBluetoothUuid MediaTitleUuid{QString{"00007001-0000-0000-0000-00A57E401D05"}};
@@ -134,7 +130,7 @@ void MediaService::pauseRequested()
     qDebug() << "MediaService pause";
     QLowEnergyCharacteristic characteristic = m_service->characteristic(MediaCommandUuid);
     Q_ASSERT(characteristic.isValid());
-    m_service->writeCharacteristic(characteristic, QByteArray(1, MEDIA_COMMAND_PAUSE));
+    m_service->writeCharacteristic(characteristic, QByteArray(1, MediaCommand::Pause));
 }
 
 void MediaService::playRequested()
@@ -142,7 +138,7 @@ void MediaService::playRequested()
     qDebug() << "MediaService play";
     QLowEnergyCharacteristic characteristic = m_service->characteristic(MediaCommandUuid);
     Q_ASSERT(characteristic.isValid());
-    m_service->writeCharacteristic(characteristic, QByteArray(1, MEDIA_COMMAND_PLAY));
+    m_service->writeCharacteristic(characteristic, QByteArray(1, MediaCommand::Play));
 }
 
 void MediaService::playPauseRequested()
@@ -150,7 +146,7 @@ void MediaService::playPauseRequested()
     qDebug() << "MediaService play/pause";
     QLowEnergyCharacteristic characteristic = m_service->characteristic(MediaCommandUuid);
     Q_ASSERT(characteristic.isValid());
-    auto cmd = (m_player->playbackStatus() == Mpris::Playing ? MEDIA_COMMAND_PAUSE : MEDIA_COMMAND_PLAY);
+    auto cmd = (m_player->playbackStatus() == Mpris::Playing ? MediaCommand::Pause : MediaCommand::Play);
     m_service->writeCharacteristic(characteristic, QByteArray(1, cmd));
 }
 
@@ -159,7 +155,7 @@ void MediaService::stopRequested()
     qDebug() << "MediaService stop";
     QLowEnergyCharacteristic characteristic = m_service->characteristic(MediaCommandUuid);
     Q_ASSERT(characteristic.isValid());
-    m_service->writeCharacteristic(characteristic, QByteArray(1, MEDIA_COMMAND_PAUSE));
+    m_service->writeCharacteristic(characteristic, QByteArray(1, MediaCommand::Pause));
 }
 
 void MediaService::nextRequested()
@@ -167,7 +163,7 @@ void MediaService::nextRequested()
     qDebug() << "MediaService next";
     QLowEnergyCharacteristic characteristic = m_service->characteristic(MediaCommandUuid);
     Q_ASSERT(characteristic.isValid());
-    m_service->writeCharacteristic(characteristic, QByteArray(1, MEDIA_COMMAND_NEXT));
+    m_service->writeCharacteristic(characteristic, QByteArray(1, MediaCommand::Next));
 }
 
 void MediaService::previousRequested()
@@ -175,7 +171,7 @@ void MediaService::previousRequested()
     qDebug() << "MediaService previous";
     QLowEnergyCharacteristic characteristic = m_service->characteristic(MediaCommandUuid);
     Q_ASSERT(characteristic.isValid());
-    m_service->writeCharacteristic(characteristic, QByteArray(1, MEDIA_COMMAND_PREVIOUS));
+    m_service->writeCharacteristic(characteristic, QByteArray(1, MediaCommand::Previous));
 }
 
 void MediaService::volumeRequested(double volume)
@@ -183,7 +179,7 @@ void MediaService::volumeRequested(double volume)
     qDebug() << "MediaService volume" << volume;
     QLowEnergyCharacteristic characteristic = m_service->characteristic(MediaCommandUuid);
     Q_ASSERT(characteristic.isValid());
-    QByteArray cmd(1, MEDIA_COMMAND_VOLUME);
+    QByteArray cmd(1, MediaCommand::Volume);
     cmd.append(volume * 100);
     m_service->writeCharacteristic(characteristic, cmd);
 }
