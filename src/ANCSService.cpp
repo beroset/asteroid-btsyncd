@@ -27,12 +27,62 @@ QLowEnergyService* ANCSService::service() const {
     return m_service;
 }
 
+static bool connectToANCSServer(QMap<QString, QVariantMap> dbusObject)
+{
+    bool connected{false};
+    if (!dbusObject.contains(DEVICE_MANAGER_IFACE)) {
+        return false;
+    }
+    qCDebug(btsyncd) << "Found DEVICE_MANAGER_IFACE";
+    /*
+     What we're looking for will look something like this:
+
+     { QMap(
+        ("org.bluez.Device1", QMap(
+            ("Adapter", QVariant(QDBusObjectPath, ))
+            ("Address", QVariant(QString, "98:69:8A:A7:E1:6A"))
+            ("AddressType", QVariant(QString, "public"))
+            ("Alias", QVariant(QString, "MyPhone"))
+            ("Appearance", QVariant(ushort, 64))
+            ("Blocked", QVariant(bool, false))
+            ("Bonded", QVariant(bool, true))
+            ("Connected", QVariant(bool, true))
+            ("Icon", QVariant(QString, "phone"))
+            ("LegacyPairing", QVariant(bool, false))
+            ("Name", QVariant(QString, "MyPhone"))
+            ("Paired", QVariant(bool, true))
+            ("ServicesResolved", QVariant(bool, false))
+            ("Trusted", QVariant(bool, false))
+            ("UUIDs", QVariant(QStringList, ("00001800-0000-1000-8000-00805f9b34fb", "00001801-0000-1000-8000-00805f9b34fb", "00001805-0000-1000-8000-00805f9b34fb", "0000180a-0000-1000-8000-00805f9b34fb", "0000180f-0000-1000-8000-00805f9b34fb", "7905f431-b5ce-4e99-a40f-4b1e122d00d0", "89d3502b-0f36-433a-8ef4-c502ad55f8dc", "9fa480e0-4967-4542-9390-d343dc5d04ae", "d0611e78-bbb4-4591-a5f8-487910ae4366")))
+        ))
+        ("org.freedesktop.DBus.Introspectable", QMap())
+        ("org.freedesktop.DBus.Properties", QMap())
+        ) }
+
+     */
+    auto device{dbusObject[DEVICE_MANAGER_IFACE]};
+    if (device.value(QStringLiteral("UUIDs")).toStringList().contains(ANCS_SERVICE_UUID, Qt::CaseInsensitive)) {
+        qCDebug(btsyncd) << "Remote contains ANCS service";
+        if (device[QStringLiteral("Connected")].toBool()) {
+            qCDebug(btsyncd) << "we are connected";
+            connected = true;
+        } else {
+            qCDebug(btsyncd) << "we are NOT connected";
+        }
+    }
+    for (const auto& item : device) {
+        qCDebug(btsyncd) << "item = " << item;
+    }
+
+    return connected;
+}
+
 static bool isMatchingCharacteristic(QString uuid, QMap<QString, QVariantMap> dbusObject)
 {
     qCDebug(btsyncd) << "Comparison object is" << dbusObject;
     if (!dbusObject.contains(GATT_CHRC_IFACE)) {
         qCDebug(btsyncd) << "Did not contain GATT_CHRC_IFACE";
-//        return false;
+        return false;
     }
     QString charUuid = dbusObject.value(GATT_CHRC_IFACE).value(QStringLiteral("UUID")).toString();
     qCDebug(btsyncd) << "Comparing " << charUuid.toLower() << "with" << uuid.toLower() << ", result=" << (charUuid.toLower() == uuid.toLower());
@@ -49,37 +99,43 @@ void ANCSService::checkForANCS()
     QDBusConnection bus = QDBusConnection::systemBus();
     QDBusInterface remoteOm(BLUEZ_SERVICE_NAME, "/", DBUS_OM_IFACE, bus);
     QDBusMessage result = remoteOm.call("GetManagedObjects");
-    QString notificationChar;
-    QString controlChar;
-    QString dataChar;
-    //QMap<QDBusObjectPath, QMap<QString, QVariantMap>> managedObjectList = result.arguments();
+    //qCDebug(btsyncd) << "result={" << result << "}";
+    QDBusObjectPath notificationChar;
+    QDBusObjectPath controlChar;
+    QDBusObjectPath dataChar;
+    using InterfaceList = QMap<QString, QVariantMap>;
     const QDBusArgument argument = result.arguments().at(0).value<QDBusArgument>();
     if (argument.currentType() == QDBusArgument::MapType) {
         argument.beginMap();
         while (!argument.atEnd()) {
-            QString key;
-            QMap<QString, QVariantMap> value;
+            QDBusObjectPath key;
+            InterfaceList value;
 
             argument.beginMapEntry();
             argument >> key >> value;
             argument.endMapEntry();
-            qCDebug(btsyncd) << "key:{" << key << "}, value:{" << value << "}";
-            if (isMatchingCharacteristic(ANCS_NOTIFICATION_SOURCE_CHARACTERISTIC_UUID, value)) {
-                qCDebug(btsyncd) << "Found ANCS notification source characteristic:" << key;
-                notificationChar = key;
-            }
-            if (isMatchingCharacteristic(ANCS_CONTROL_POINT_CHARACTERISTIC_UUID, value)) {
-                qCDebug(btsyncd) << "Found ANCS control point characteristic:" << key;
-                controlChar = key;
-            }
-            if (isMatchingCharacteristic(ANCS_DATA_SOURCE_CHARACTERISTIC_UUID, value)) {
-                qCDebug(btsyncd) << "Found ANCS data source characteristic:" << key;
-                dataChar = key;
+            //qCDebug(btsyncd) << "key:{" << key << "}, value:{" << value << "}";
+            if (connectToANCSServer(value)) {
+                qCDebug(btsyncd) << "key:{" << key << "}, value:{" << value << "}";
+            } 
+            if (value.contains(GATT_CHRC_IFACE)) {
+                if (isMatchingCharacteristic(ANCS_NOTIFICATION_SOURCE_CHARACTERISTIC_UUID, value)) {
+                    qCDebug(btsyncd) << "Found ANCS notification source characteristic:" << key;
+                    notificationChar = key;
+                }
+                else if (isMatchingCharacteristic(ANCS_CONTROL_POINT_CHARACTERISTIC_UUID, value)) {
+                    qCDebug(btsyncd) << "Found ANCS control point characteristic:" << key;
+                    controlChar = key;
+                }
+                else if (isMatchingCharacteristic(ANCS_DATA_SOURCE_CHARACTERISTIC_UUID, value)) {
+                    qCDebug(btsyncd) << "Found ANCS data source characteristic:" << key;
+                    dataChar = key;
+                }
             }
         }
         argument.endMap();
     }
-    if (!notificationChar.isEmpty() && !controlChar.isEmpty() && !dataChar.isEmpty()) {
+    if (!notificationChar.path().isEmpty() && !controlChar.path().isEmpty() && !dataChar.path().isEmpty()) {
         qCDebug(btsyncd) << "All ANCS characteristics found";
 #if 0
         controlCharacteristic = controlChar;
