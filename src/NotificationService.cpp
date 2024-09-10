@@ -10,9 +10,9 @@
 static const QBluetoothUuid NotificationServiceUuid{QString{"00009071-0000-0000-0000-00A57E401D05"}};
 static const QBluetoothUuid NotificationUpdateUuid{QString{"00009001-0000-0000-0000-00A57E401D05"}};
 static const QBluetoothUuid NotificationFeedbackUuid{QString{"00009002-0000-0000-0000-00A57E401D05"}};
-#define NOTIFICATIONS_SERVICE_NAME   "org.freedesktop.Notifications"
-#define NOTIFICATIONS_MAIN_IFACE     "org.freedesktop.Notifications"
-#define NOTIFICATIONS_PATH_BASE      "/org/freedesktop/Notifications"
+static const QString NOTIFICATIONS_SERVICE_NAME = QStringLiteral("org.freedesktop.Notifications");
+static const QString NOTIFICATIONS_MAIN_IFACE = QStringLiteral("org.freedesktop.Notifications");
+static const QString NOTIFICATIONS_PATH_BASE = QStringLiteral("/org/freedesktop/Notifications");
 
 
 NotificationService::NotificationService(BluetoothService &bluetoothService, QObject *parent) : QObject(parent) {

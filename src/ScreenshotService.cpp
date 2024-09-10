@@ -13,9 +13,9 @@ static const QBluetoothUuid ScreenshotServiceUuid{QString{"00006071-0000-0000-00
 static const QBluetoothUuid ScreenshotRequestUuid{QString{"00006001-0000-0000-0000-00A57E401D05"}};
 static const QBluetoothUuid ScreenshotContentUuid{QString{"00006002-0000-0000-0000-00A57E401D05"}};
 
-#define SCREENSHOT_SERVICE_NAME      "org.nemomobile.lipstick"
-#define SCREENSHOT_MAIN_IFACE        "org.nemomobile.lipstick"
-#define SCREENSHOT_PATH_BASE         "/org/nemomobile/lipstick/screenshot"
+static const QString SCREENSHOT_SERVICE_NAME = QStringLiteral("org.nemomobile.lipstick");
+static const QString SCREENSHOT_MAIN_IFACE = QStringLiteral("org.nemomobile.lipstick");
+static const QString SCREENSHOT_PATH_BASE = QStringLiteral("/org/nemomobile/lipstick/screenshot");
 
 ScreenshotService::ScreenshotService(BluetoothService &bluetoothService, QObject *parent) : QObject(parent) {
     QLowEnergyServiceData serviceData = createScreenshotServiceData();
