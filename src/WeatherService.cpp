@@ -6,11 +6,11 @@
 #include <QtBluetooth/QLowEnergyDescriptorData>
 #include <QDebug>
 
-static const QBluetoothUuid WeatherServiceUuid{QString{"00008071-0000-0000-0000-00A57E401D05"}};
-static const QBluetoothUuid WeatherCityUuid{QString{"00008001-0000-0000-0000-00A57E401D05"}};
-static const QBluetoothUuid WeatherIdsUuid{QString{"00008002-0000-0000-0000-00A57E401D05"}};
-static const QBluetoothUuid WeatherMinTUuid{QString{"00008003-0000-0000-0000-00A57E401D05"}};
-static const QBluetoothUuid WeatherMaxTUuid{QString{"00008004-0000-0000-0000-00A57E401D05"}};
+static const QBluetoothUuid WeatherServiceUuid{QStringLiteral("00008071-0000-0000-0000-00A57E401D05")};
+static const QBluetoothUuid WeatherCityUuid{QStringLiteral("00008001-0000-0000-0000-00A57E401D05")};
+static const QBluetoothUuid WeatherIdsUuid{QStringLiteral("00008002-0000-0000-0000-00A57E401D05")};
+static const QBluetoothUuid WeatherMinTUuid{QStringLiteral("00008003-0000-0000-0000-00A57E401D05")};
+static const QBluetoothUuid WeatherMaxTUuid{QStringLiteral("00008004-0000-0000-0000-00A57E401D05")};
 
 static int getQByteArrayInt(QByteArray arr, int index) {
     return (((unsigned char) arr[index * 2]) << 8) | ((unsigned char) arr[index * 2 + 1]);
