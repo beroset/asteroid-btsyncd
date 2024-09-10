@@ -5,17 +5,17 @@
 #include <QtCore/QLoggingCategory>
 #include <QDebug>
 
-#define ANCS_SERVICE_UUID "7905F431-B5CE-4E99-A40F-4B1E122D00D0"
+static const QString ANCS_SERVICE_UUID = QStringLiteral("7905F431-B5CE-4E99-A40F-4B1E122D00D0");
 
-#define ANCS_NOTIFICATION_SOURCE_CHARACTERISTIC_UUID "9FBF120D-6301-42D9-8C58-25E699A21DBD"
-#define ANCS_CONTROL_POINT_CHARACTERISTIC_UUID "69D1D8F3-45E1-49A8-9821-9BBDFDAAD9D9"
-#define ANCS_DATA_SOURCE_CHARACTERISTIC_UUID "22EAC6E9-24D6-4BB5-BE44-B36ACE7C7BFB"
+static const QString ANCS_NOTIFICATION_SOURCE_CHARACTERISTIC_UUID = QStringLiteral("9FBF120D-6301-42D9-8C58-25E699A21DBD");
+static const QString ANCS_CONTROL_POINT_CHARACTERISTIC_UUID = QStringLiteral("69D1D8F3-45E1-49A8-9821-9BBDFDAAD9D9");
+static const QString ANCS_DATA_SOURCE_CHARACTERISTIC_UUID = QStringLiteral("22EAC6E9-24D6-4BB5-BE44-B36ACE7C7BFB");
 
-#define BLUEZ_SERVICE_NAME           "org.bluez"
-#define GATT_MANAGER_IFACE           "org.bluez.GattManager1"
-#define DEVICE_MANAGER_IFACE         "org.bluez.Device1"
-#define DBUS_OM_IFACE                "org.freedesktop.DBus.ObjectManager"
-#define GATT_CHRC_IFACE              "org.bluez.GattCharacteristic1"
+static const QString BLUEZ_SERVICE_NAME = QStringLiteral("org.bluez");
+static const QString GATT_MANAGER_IFACE = QStringLiteral("org.bluez.GattManager1");
+static const QString DEVICE_MANAGER_IFACE= QStringLiteral("org.bluez.Device1");
+static const QString DBUS_OM_IFACE = QStringLiteral("org.freedesktop.DBus.ObjectManager");
+static const QString GATT_CHRC_IFACE = QStringLiteral("org.bluez.GattCharacteristic1");
 
 ANCSService::ANCSService(BluetoothService &bluetoothService, QObject *parent)
     : QObject(parent)
@@ -34,7 +34,7 @@ static bool isMatchingCharacteristic(QString uuid, QMap<QString, QVariantMap> db
         qCDebug(btsyncd) << "Did not contain GATT_CHRC_IFACE";
 //        return false;
     }
-    QString charUuid = dbusObject.value(GATT_CHRC_IFACE).value("UUID").toString();
+    QString charUuid = dbusObject.value(GATT_CHRC_IFACE).value(QStringLiteral("UUID")).toString();
     qCDebug(btsyncd) << "Comparing " << charUuid.toLower() << "with" << uuid.toLower() << ", result=" << (charUuid.toLower() == uuid.toLower());
     return charUuid.toLower() == uuid.toLower();
 }
@@ -45,12 +45,14 @@ void ANCSService::checkForANCS()
     // Although there is a connection made to the watch from another device,
     // we also need to connect in the other direction to allow subscribing to 
     // notifications.
+    // Once we are connected, we can see if the remote device support ANCS.
     QDBusConnection bus = QDBusConnection::systemBus();
     QDBusInterface remoteOm(BLUEZ_SERVICE_NAME, "/", DBUS_OM_IFACE, bus);
     QDBusMessage result = remoteOm.call("GetManagedObjects");
     QString notificationChar;
     QString controlChar;
     QString dataChar;
+    //QMap<QDBusObjectPath, QMap<QString, QVariantMap>> managedObjectList = result.arguments();
     const QDBusArgument argument = result.arguments().at(0).value<QDBusArgument>();
     if (argument.currentType() == QDBusArgument::MapType) {
         argument.beginMap();
