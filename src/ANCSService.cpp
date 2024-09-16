@@ -89,12 +89,23 @@ static bool isMatchingCharacteristic(QString uuid, QMap<QString, QVariantMap> db
     return charUuid.toLower() == uuid.toLower();
 }
 
-void ANCSService::checkForANCS()
+void ANCSService::checkForANCS(QBluetoothAddress remote, QBluetoothAddress local)
 {
     // gdbus call -y -d "org.bluez" -o /org/bluez/hci0/dev_98_69_8A_A7_E1_5B -m org.bluez.Device1.Connect
     // Although there is a connection made to the watch from another device,
     // we also need to connect in the other direction to allow subscribing to 
     // notifications.
+    qCDebug(btsyncd) << "local address" << local
+            << "remote address" << remote;
+    // QLowEnergyController *QLowEnergyController::createCentral(const QBluetoothAddress &remoteDevice, const QBluetoothAddress &localDevice, QObject *parent = nullptr)
+    controller = QLowEnergyController::createCentral(remote, local, this);
+    if (controller) {
+        qCDebug(btsyncd) << "Before state is " << controller->state();
+        controller->connectToDevice();
+        qCDebug(btsyncd) << "After state is " << controller->state();
+    } else {
+        qCDebug(btsyncd) << "ERROR!! Failed to create controller.";
+    }
     // Once we are connected, we can see if the remote device support ANCS.
     QDBusConnection bus = QDBusConnection::systemBus();
     QDBusInterface remoteOm(BLUEZ_SERVICE_NAME, "/", DBUS_OM_IFACE, bus);

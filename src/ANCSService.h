@@ -21,7 +21,7 @@ signals:
 #endif 
 
 private slots:
-    void checkForANCS();
+    void checkForANCS(QBluetoothAddress remote, QBluetoothAddress local);
 #if 0
     void onServiceDiscovered(const QBluetoothUuid &uuid);
     void onServiceStateChanged(QLowEnergyService::ServiceState state);
@@ -30,7 +30,8 @@ private slots:
 #endif
 
 private:
-    QLowEnergyService *m_service;
+    QLowEnergyService *m_service = nullptr;
+    QLowEnergyController *controller = nullptr;
 #if 0
     QLowEnergyService *m_ancsService;
     QLowEnergyCharacteristic m_notificationSourceChar;

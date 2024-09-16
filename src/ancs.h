@@ -8,6 +8,7 @@
 #include <QCache>
 #include <QTimer>
 #include <QDateTime>
+#include <QLowEnergyController>
 
 #include "ancs_notification.h"
 
@@ -32,6 +33,7 @@ private:
     QDateTime previousSessionMaxTimestamp;
     QTimer *pastNotificationsTimer;
     bool noFeedbackForPastNotifications;
+
     bool isMatchingCharacteristic(QString uuid, QMap<QString, QVariantMap> dbusObject);
     void appendByte(QByteArray &arr, unsigned int val);
     void append2Bytes(QByteArray &arr, unsigned int val);

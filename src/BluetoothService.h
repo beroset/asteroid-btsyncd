@@ -19,7 +19,7 @@ public:
     void startAdvertising(const QString &localName);
 
 signals:
-    void deviceConnected();
+    void deviceConnected(QBluetoothAddress remote, QBluetoothAddress local);
 
 private slots:
     void onControllerStateChanged(QLowEnergyController::ControllerState state);
