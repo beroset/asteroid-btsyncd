@@ -1,6 +1,7 @@
 set(SRC
 	main.cpp
         Device.cpp
+        Remote.cpp
         BluetoothService.cpp
         HeartRateService.cpp
         BatteryService.cpp
@@ -14,6 +15,7 @@ set(SRC
 
 set(HEADERS
         Device.h
+        Remote.h
         BluetoothService.h
         HeartRateService.h
         BatteryService.h

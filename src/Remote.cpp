@@ -1,4 +1,5 @@
-#include "ANCSService.h"
+#include "Remote.h"
+#include "BluetoothService.h"
 #include <QtBluetooth/QBluetoothUuid>
 #include <QDBusInterface>
 #include <QDBusArgument>
@@ -17,19 +18,88 @@ static const QString DEVICE_MANAGER_IFACE= QStringLiteral("org.bluez.Device1");
 static const QString DBUS_OM_IFACE = QStringLiteral("org.freedesktop.DBus.ObjectManager");
 static const QString GATT_CHRC_IFACE = QStringLiteral("org.bluez.GattCharacteristic1");
 
-ANCSService::ANCSService(BluetoothService &bluetoothService, QObject *parent)
+
+Remote::Remote(const QBluetoothAddress &remoteDevice, const QBluetoothAddress &localDevice, 
+        QObject *parent) 
     : QObject(parent)
+    , m_local{localDevice}
+    , m_remote{remoteDevice}
 {
-    connect(&bluetoothService, &BluetoothService::deviceConnected, this, &ANCSService::checkForANCS);
+    // connect to DBus and find both the local and remote devices
+    QDBusConnection bus = QDBusConnection::systemBus();
+    QDBusInterface remoteOm(BLUEZ_SERVICE_NAME, "/", DBUS_OM_IFACE, bus);
+    QDBusMessage result = remoteOm.call(QStringLiteral("GetManagedObjects"));
+    const QDBusArgument argument = result.arguments().at(0).value<QDBusArgument>();
+    if (argument.currentType() == QDBusArgument::MapType) {
+        argument.beginMap();
+        while (!argument.atEnd()) {
+            QDBusObjectPath key;
+            InterfaceList dbusObject;
+
+            argument.beginMapEntry();
+            argument >> key >> dbusObject;
+            argument.endMapEntry();
+            //qCDebug(btsyncd) << "key:{" << key << "}, dbusObject:{" << dbusObject << "}";
+            if (dbusObject.contains(DEVICE_MANAGER_IFACE)) {
+                auto device{dbusObject[DEVICE_MANAGER_IFACE]};
+                QBluetoothAddress discoveredAddress{device.value(QStringLiteral("Address")).toString()};
+                if (remoteDevice == discoveredAddress) {
+                    qCDebug(btsyncd) << "remoteDevice:{" << remoteDevice  << "}";
+                    remoteDBusObject = dbusObject;
+                }
+                else if (localDevice == discoveredAddress) {
+                    qCDebug(btsyncd) << "localDevice:{" << localDevice << "}";
+                    localDBusObject = dbusObject;
+                }
+            }
+        }
+        argument.endMap();
+    }
 }
 
-QLowEnergyService* ANCSService::service() const {
-    return m_service;
+Remote::~Remote()
+{
+    disconnectFromDevice();
 }
 
-static bool connectToANCSServer(QMap<QString, QVariantMap> dbusObject)
+// Returns the list of services offered by the remote device
+QList<QBluetoothUuid> Remote::services() const
 {
-    bool connected{false};
+    return m_services;
+}
+
+// the local address
+QBluetoothAddress Remote::localAddress() const
+{
+    return m_remote;
+}
+
+// the remote address
+QBluetoothAddress Remote::remoteAddress() const
+{
+    return m_local;
+}
+
+QString Remote::remoteName() const
+{
+    return m_name;
+}
+
+QLowEnergyController::RemoteAddressType Remote::remoteAddressType() const
+{
+    return QLowEnergyController::RemoteAddressType::PublicAddress;
+}
+
+/*
+ * We connect via DBus and then enumerate and save the services.
+ */
+void Remote::connectToDevice() //QMap<QString, QVariantMap> dbusObject)
+{
+    if (state() != QLowEnergyController::UnconnectedState) {
+        return;
+    }
+    // gdbus call -y -d "org.bluez" -o /org/bluez/hci0/dev_98_69_8A_A7_E1_5B -m org.bluez.Device1.Connect
+#if 0
     if (!dbusObject.contains(DEVICE_MANAGER_IFACE)) {
         return false;
     }
@@ -73,44 +143,38 @@ static bool connectToANCSServer(QMap<QString, QVariantMap> dbusObject)
     for (const auto& item : device) {
         qCDebug(btsyncd) << "item = " << item;
     }
-
-    return connected;
+#endif
 }
 
-static bool isMatchingCharacteristic(QString uuid, QMap<QString, QVariantMap> dbusObject)
+QLowEnergyController::Error Remote::error() const
 {
-    // qCDebug(btsyncd) << "Comparison object is" << dbusObject;
-    if (!dbusObject.contains(GATT_CHRC_IFACE)) {
-        //qCDebug(btsyncd) << "Did not contain GATT_CHRC_IFACE";
-        return false;
-    }
-    QString charUuid = dbusObject.value(GATT_CHRC_IFACE).value(QStringLiteral("UUID")).toString();
-    //qCDebug(btsyncd) << "Comparing " << charUuid.toLower() << "with" << uuid.toLower() << ", result=" << (charUuid.toLower() == uuid.toLower());
-    return charUuid.toLower() == uuid.toLower();
+    return m_error;
 }
 
-void ANCSService::onConnected()
+// returns a string representation of the last error
+QString Remote::errorString() const
 {
-    qCDebug(btsyncd) << "CONNECTED";
-    //controller->discoverServices();
+    return QStringLiteral("No error");
 }
 
-void ANCSService::onServiceDiscovered(const QBluetoothUuid &uuid)
+QLowEnergyController::ControllerState Remote::state() const
 {
-    qCDebug(btsyncd) << "Discovered service" << uuid;
+    return m_state;
 }
 
-void ANCSService::onStateChanged(QLowEnergyController::ControllerState state)
+// disconnect from the Bluetooth Low Energy device.  The connected() signal is emitted once the connection is established.
+void Remote::disconnectFromDevice()
+{
+    m_services = {};
+}
+
+#if 0
+void Remote::stateChanged(QLowEnergyController::ControllerState state)
 {
     qCDebug(btsyncd) << "State changed to" << state;
 }
 
-void ANCSService::onError(QLowEnergyController::Error newError)
-{
-    qCDebug(btsyncd) << "Error from controller:" << newError;
-}
-
-void ANCSService::checkForANCS(QBluetoothAddress remote, QBluetoothAddress local)
+void Remote::checkForANCS(QBluetoothAddress remote, QBluetoothAddress local)
 {
     // gdbus call -y -d "org.bluez" -o /org/bluez/hci0/dev_98_69_8A_A7_E1_5B -m org.bluez.Device1.Connect
     // Although there is a connection made to the watch from another device,
@@ -119,14 +183,6 @@ void ANCSService::checkForANCS(QBluetoothAddress remote, QBluetoothAddress local
     qCDebug(btsyncd) << "local address" << local
             << "remote address" << remote;
     // QLowEnergyController *QLowEnergyController::createCentral(const QBluetoothAddress &remoteDevice, const QBluetoothAddress &localDevice, QObject *parent = nullptr)
-    controller = new Remote(remote, local, this);
-    if (controller) {
-        connect(controller, &Remote::connected, this, &ANCSService::onConnected);
-        connect(controller, &Remote::stateChanged, this, &ANCSService::onStateChanged);
-        controller->connectToDevice();
-    } else {
-        qCDebug(btsyncd) << "ERROR!! Failed to create controller.";
-    }
     // Once we are connected, we can see if the remote device support ANCS.
     QDBusConnection bus = QDBusConnection::systemBus();
     QDBusInterface remoteOm(BLUEZ_SERVICE_NAME, "/", DBUS_OM_IFACE, bus);
@@ -137,35 +193,6 @@ void ANCSService::checkForANCS(QBluetoothAddress remote, QBluetoothAddress local
     QDBusObjectPath dataChar;
     using InterfaceList = QMap<QString, QVariantMap>;
     const QDBusArgument argument = result.arguments().at(0).value<QDBusArgument>();
-    if (argument.currentType() == QDBusArgument::MapType) {
-        argument.beginMap();
-        while (!argument.atEnd()) {
-            QDBusObjectPath key;
-            InterfaceList value;
-
-            argument.beginMapEntry();
-            argument >> key >> value;
-            argument.endMapEntry();
-            //qCDebug(btsyncd) << "key:{" << key << "}, value:{" << value << "}";
-            if (connectToANCSServer(value)) {
-                //qCDebug(btsyncd) << "key:{" << key << "}, value:{" << value << "}";
-            } 
-            if (value.contains(GATT_CHRC_IFACE)) {
-                if (isMatchingCharacteristic(ANCS_NOTIFICATION_SOURCE_CHARACTERISTIC_UUID, value)) {
-                    qCDebug(btsyncd) << "Found ANCS notification source characteristic:" << key;
-                    notificationChar = key;
-                }
-                else if (isMatchingCharacteristic(ANCS_CONTROL_POINT_CHARACTERISTIC_UUID, value)) {
-                    qCDebug(btsyncd) << "Found ANCS control point characteristic:" << key;
-                    controlChar = key;
-                }
-                else if (isMatchingCharacteristic(ANCS_DATA_SOURCE_CHARACTERISTIC_UUID, value)) {
-                    qCDebug(btsyncd) << "Found ANCS data source characteristic:" << key;
-                    dataChar = key;
-                }
-            }
-        }
-        argument.endMap();
     }
     if (!notificationChar.path().isEmpty() && !controlChar.path().isEmpty() && !dataChar.path().isEmpty()) {
         qCDebug(btsyncd) << "All ANCS characteristics found";
@@ -186,9 +213,10 @@ void ANCSService::checkForANCS(QBluetoothAddress remote, QBluetoothAddress local
 #endif
     }
 }
+#endif 
 
 #if 0
-void ANCSService::setController(QLowEnergyController *controller) {
+void Remote::setController(QLowEnergyController *controller) {
     if (m_controller) {
         disconnect(m_controller, nullptr, this, nullptr);
         m_controller->deleteLater();
@@ -207,7 +235,7 @@ void ANCSService::setController(QLowEnergyController *controller) {
         m_controller = nullptr;
     });
 
-    connect(m_controller, &QLowEnergyController::serviceDiscovered, this, &ANCSService::onServiceDiscovered);
+    connect(m_controller, &QLowEnergyController::serviceDiscovered, this, &Remote::onServiceDiscovered);
     connect(m_controller, &QLowEnergyController::discoveryFinished, this, [this]() {
         if (!m_ancsService) {
             qCDebug(btsyncd) << "ANCS service not found";
@@ -217,14 +245,14 @@ void ANCSService::setController(QLowEnergyController *controller) {
     m_controller->connectToDevice();
 }
 
-void ANCSService::onServiceDiscovered(const QBluetoothUuid &uuid) {
+void Remote::onServiceDiscovered(const QBluetoothUuid &uuid) {
     if (uuid == QBluetoothUuid(QStringLiteral("7905F431-B5CE-4E99-A40F-4B1E122D00D0"))) {
         qCDebug(btsyncd) << "ANCS service discovered!";
         discoverService();
     }
 }
 
-void ANCSService::discoverService() {
+void Remote::discoverService() {
     if (m_ancsService) return;
 
     m_ancsService = m_controller->createServiceObject(QBluetoothUuid(QStringLiteral("7905F431-B5CE-4E99-A40F-4B1E122D00D0")), this);
@@ -234,13 +262,13 @@ void ANCSService::discoverService() {
         return;
     }
 
-    connect(m_ancsService, &QLowEnergyService::stateChanged, this, &ANCSService::onServiceStateChanged);
-    connect(m_ancsService, &QLowEnergyService::characteristicChanged, this, &ANCSService::onCharacteristicChanged);
+    connect(m_ancsService, &QLowEnergyService::stateChanged, this, &Remote::onServiceStateChanged);
+    connect(m_ancsService, &QLowEnergyService::characteristicChanged, this, &Remote::onCharacteristicChanged);
 
     m_ancsService->discoverDetails();
 }
 
-void ANCSService::onServiceStateChanged(QLowEnergyService::ServiceState state) {
+void Remote::onServiceStateChanged(QLowEnergyService::ServiceState state) {
     if (state == QLowEnergyService::ServiceDiscovered) {
         m_notificationSourceChar = m_ancsService->characteristic(QBluetoothUuid(QStringLiteral("9FBF120D-6301-42D9-8C58-25E699A21DBD")));
         m_controlPointChar = m_ancsService->characteristic(QBluetoothUuid(QStringLiteral("69D1D8F3-45E1-49A8-9821-9BBDFDAAD9D9")));
@@ -255,7 +283,7 @@ void ANCSService::onServiceStateChanged(QLowEnergyService::ServiceState state) {
     }
 }
 
-void ANCSService::subscribeToNotifications() {
+void Remote::subscribeToNotifications() {
     if (!m_ancsService) return;
 
     m_ancsService->writeDescriptor(
@@ -269,7 +297,7 @@ void ANCSService::subscribeToNotifications() {
     );
 }
 
-void ANCSService::onCharacteristicChanged(const QLowEnergyCharacteristic &characteristic, const QByteArray &newValue) {
+void Remote::onCharacteristicChanged(const QLowEnergyCharacteristic &characteristic, const QByteArray &newValue) {
     if (characteristic.uuid() == m_notificationSourceChar.uuid()) {
         processNotificationSource(newValue);
     } else if (characteristic.uuid() == m_dataSourceChar.uuid()) {
@@ -277,18 +305,18 @@ void ANCSService::onCharacteristicChanged(const QLowEnergyCharacteristic &charac
     }
 }
 
-void ANCSService::onCharacteristicWritten(const QLowEnergyCharacteristic &characteristic, const QByteArray &value) {
+void Remote::onCharacteristicWritten(const QLowEnergyCharacteristic &characteristic, const QByteArray &value) {
     if (characteristic.uuid() == m_controlPointChar.uuid()) {
         qCDebug(btsyncd) << "Control Point command sent:" << value;
     }
 }
 
-void ANCSService::processNotificationSource(const QByteArray &data) {
+void Remote::processNotificationSource(const QByteArray &data) {
     qCDebug(btsyncd) << "Notification Source Data received:" << data;
     emit notificationReceived(data);
 }
 
-void ANCSService::processDataSource(const QByteArray &data) {
+void Remote::processDataSource(const QByteArray &data) {
     qCDebug(btsyncd) << "Data Source Data received:" << data;
     emit dataSourceReceived(data);
 }

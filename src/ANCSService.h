@@ -6,6 +6,7 @@
 #include <QtBluetooth/QLowEnergyController>
 #include <QtBluetooth/QLowEnergyServiceData>
 #include "BluetoothService.h"
+#include "Remote.h"
 
 class ANCSService : public QObject {
     Q_OBJECT
@@ -22,8 +23,11 @@ signals:
 
 private slots:
     void checkForANCS(QBluetoothAddress remote, QBluetoothAddress local);
-#if 0
+    void onConnected();
     void onServiceDiscovered(const QBluetoothUuid &uuid);
+    void onStateChanged(QLowEnergyController::ControllerState state);
+    void onError(QLowEnergyController::Error newError);
+#if 0
     void onServiceStateChanged(QLowEnergyService::ServiceState state);
     void onCharacteristicChanged(const QLowEnergyCharacteristic &characteristic, const QByteArray &newValue);
     void onCharacteristicWritten(const QLowEnergyCharacteristic &characteristic, const QByteArray &value);
@@ -31,7 +35,7 @@ private slots:
 
 private:
     QLowEnergyService *m_service = nullptr;
-    QLowEnergyController *controller = nullptr;
+    Remote *controller = nullptr;
 #if 0
     QLowEnergyService *m_ancsService;
     QLowEnergyCharacteristic m_notificationSourceChar;
