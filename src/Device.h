@@ -41,6 +41,8 @@ private:
     // this controller manages the local interface
     QLowEnergyController *m_controller;
     // this is for the remote (paired) device for reverse services
+    // Note that it is ephemeral and only exists for the duration 
+    // of the connection.
     Remote *m_remote = nullptr;
 };
 
