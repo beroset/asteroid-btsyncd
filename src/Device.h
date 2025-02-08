@@ -6,6 +6,8 @@
 #include <QtBluetooth/QLowEnergyController>
 
 #include "BluetoothService.h"
+#include "Remote.h"
+
 #include "BatteryService.h"
 #include "HeartRateService.h"
 #include "NotificationService.h"
@@ -13,7 +15,6 @@
 #include "MediaService.h"
 #include "ScreenshotService.h"
 #include "WeatherService.h"
-#include "ANCSService.h"
 
 
 class Device : public QObject {
@@ -21,14 +22,14 @@ class Device : public QObject {
 
 public:
     explicit Device(QObject *parent = nullptr);
-#if 0
 private slots:
-    void onDeviceConnected();
-    void onNotificationReceived(const QByteArray &data);
-    void onDataSourceReceived(const QByteArray &data);
-#endif
+    void onDeviceConnected(QBluetoothAddress remote, QBluetoothAddress local);
+    void onDeviceDisconnected();
 private:
+    // the BluetoothService drives everything else
     BluetoothService m_bluetoothService;
+
+    // these are the basic included services
     BatteryService m_batteryService;
     HeartRateService m_heartRateService;
     NotificationService m_notificationService;
@@ -36,11 +37,11 @@ private:
     MediaService m_mediaService;
     ScreenshotService m_screenshotService;
     WeatherService m_weatherService;
-    ANCSService m_ancsService;
 
+    // this controller manages the local interface
     QLowEnergyController *m_controller;
-    
-    //void setupController();
+    // this is for the remote (paired) device for reverse services
+    Remote *m_remote = nullptr;
 };
 
 #endif // DEVICE_H

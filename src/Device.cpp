@@ -10,49 +10,25 @@ Device::Device(QObject *parent)
     , m_mediaService(m_bluetoothService, this)
     , m_screenshotService(m_bluetoothService, this)
     , m_weatherService(m_bluetoothService, this)
-    , m_ancsService(m_bluetoothService, this)
 {
-    // TODO: add code to read system name
-#define USE_HOSTNAME 1
-#if USE_HOSTNAME
     static constexpr unsigned namesize{10};
     char hostname[namesize];
     if (gethostname(hostname, namesize) != 0) {
         qCDebug(btsyncd) << "Unable to read hostname";
     }
     m_bluetoothService.startAdvertising(hostname);
-#else
-    m_bluetoothService.startAdvertising("catfish3");
-#endif
-#if 0
-    // In this example, we assume the iPhone initiates the connection.
-    setupController();
+    connect(&m_bluetoothService, &BluetoothService::deviceConnected, this, &Device::onDeviceConnected);
+    connect(&m_bluetoothService, &BluetoothService::deviceDisconnected, this, &Device::onDeviceDisconnected);
 }
 
-void Device::setupController() {
-    // This would normally be set based on an event indicating an incoming connection.
-    // For the sake of this example, assume a QBluetoothDeviceInfo instance is available.
-    // QBluetoothDeviceInfo deviceInfo = ...;
-
-    // In practice, you would obtain the deviceInfo from a connection event.
-    // m_controller = QLowEnergyController::createCentral(deviceInfo, this);
-
-    // For demonstration purposes, assuming controller is set up:
-    if (m_controller) {
-//        m_ancsService.setController(m_controller);
-    }
-
-    connect(&m_ancsService, &ANCSService::notificationReceived, this, &Device::onNotificationReceived);
-    connect(&m_ancsService, &ANCSService::dataSourceReceived, this, &Device::onDataSourceReceived);
+void Device::onDeviceDisconnected()
+{
+    delete m_remote;  // delete the existing one if it exists    
+    m_remote = nullptr;
 }
 
-void Device::onNotificationReceived(const QByteArray &data) {
-    qDebug() << "Notification received:" << data;
-    // Handle notification source data here
-}
-
-void Device::onDataSourceReceived(const QByteArray &data) {
-    qDebug() << "Data source received:" << data;
-    // Handle data source data here
-#endif
+void Device::onDeviceConnected(QBluetoothAddress remote, QBluetoothAddress local)
+{
+    delete m_remote;  // delete the existing one if it exists    
+    m_remote = new Remote(remote, local, this);
 }
