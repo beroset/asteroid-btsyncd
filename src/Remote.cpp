@@ -71,13 +71,13 @@ QList<QBluetoothUuid> Remote::services() const
 // the local address
 QBluetoothAddress Remote::localAddress() const
 {
-    return m_remote;
+    return m_local;
 }
 
 // the remote address
 QBluetoothAddress Remote::remoteAddress() const
 {
-    return m_local;
+    return m_remote;
 }
 
 QString Remote::remoteName() const
