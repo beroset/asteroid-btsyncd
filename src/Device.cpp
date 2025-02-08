@@ -1,4 +1,5 @@
 #include "Device.h"
+#include <unistd.h>
 
 Device::Device(QObject *parent)
     : QObject(parent)
@@ -12,7 +13,17 @@ Device::Device(QObject *parent)
     , m_ancsService(m_bluetoothService, this)
 {
     // TODO: add code to read system name
+#define USE_HOSTNAME 1
+#if USE_HOSTNAME
+    static constexpr unsigned namesize{10};
+    char hostname[namesize];
+    if (gethostname(hostname, namesize) != 0) {
+        qCDebug(btsyncd) << "Unable to read hostname";
+    }
+    m_bluetoothService.startAdvertising(hostname);
+#else
     m_bluetoothService.startAdvertising("catfish3");
+#endif
 #if 0
     // In this example, we assume the iPhone initiates the connection.
     setupController();
