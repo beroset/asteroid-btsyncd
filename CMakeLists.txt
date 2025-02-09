@@ -15,7 +15,7 @@ include(ECMFindQmlModule)
 include(AsteroidCMakeSettings)
 include(AsteroidTranslations)
 
-find_package(Qt5 COMPONENTS DBus Bluetooth REQUIRED)
+find_package(Qt5 COMPONENTS DBus Bluetooth Sensors REQUIRED)
 find_package(Timed REQUIRED)
 find_package(QtMpris REQUIRED)
 find_package(SystemSettings REQUIRED)
