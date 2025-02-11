@@ -28,6 +28,8 @@ set(HEADERS
 )
 
 add_executable(asteroid-btsyncd ${SRC} ${HEADERS})
+configure_file("asteroid-btsyncd.h.in" "asteroid-btsyncd.h")
+target_include_directories(asteroid-btsyncd PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 
 target_link_libraries(asteroid-btsyncd PRIVATE
 	Qt5::DBus
