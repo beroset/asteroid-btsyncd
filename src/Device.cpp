@@ -6,14 +6,15 @@ static char hostname[namesize];
 
 Device::Device(QObject *parent)
     : QObject(parent)
-    , m_batteryService(m_bluetoothService, this)
-    , m_heartRateService(m_bluetoothService, this)
-    , m_notificationService(m_bluetoothService, this)
-    , m_timeService(m_bluetoothService, this)
-    , m_mediaService(m_bluetoothService, this)
-    , m_screenshotService(m_bluetoothService, this)
-    , m_weatherService(m_bluetoothService, this)
 {
+    m_batteryService = new BatteryService(m_bluetoothService, this);
+    m_heartRateService = new HeartRateService(m_bluetoothService, this);
+    m_notificationService = new NotificationService(m_bluetoothService, this);
+    m_timeService = new TimeService(m_bluetoothService, this);
+    m_mediaService = new MediaService(m_bluetoothService, this);
+    m_screenshotService = new ScreenshotService(m_bluetoothService, this);
+    m_weatherService = new WeatherService(m_bluetoothService, this);
+
     if (gethostname(hostname, namesize) != 0) {
         qCDebug(btsyncd) << "Unable to read hostname";
     }
@@ -29,6 +30,23 @@ void Device::onDeviceDisconnected()
         delete m_remote;  // delete the existing one if it exists
         m_remote = nullptr;
     }
+
+    delete m_batteryService;
+    delete m_heartRateService;
+    delete m_notificationService;
+    delete m_timeService;
+    delete m_mediaService;
+    delete m_screenshotService;
+    delete m_weatherService;
+
+    m_batteryService = new BatteryService(m_bluetoothService, this);
+    m_heartRateService = new HeartRateService(m_bluetoothService, this);
+    m_notificationService = new NotificationService(m_bluetoothService, this);
+    m_timeService = new TimeService(m_bluetoothService, this);
+    m_mediaService = new MediaService(m_bluetoothService, this);
+    m_screenshotService = new ScreenshotService(m_bluetoothService, this);
+    m_weatherService = new WeatherService(m_bluetoothService, this);
+
     m_bluetoothService.startAdvertising(hostname);
 }
 

@@ -30,16 +30,14 @@ private:
     BluetoothService m_bluetoothService;
 
     // these are the basic included services
-    BatteryService m_batteryService;
-    HeartRateService m_heartRateService;
-    NotificationService m_notificationService;
-    TimeService m_timeService;
-    MediaService m_mediaService;
-    ScreenshotService m_screenshotService;
-    WeatherService m_weatherService;
+    BatteryService *m_batteryService;
+    HeartRateService *m_heartRateService;
+    NotificationService *m_notificationService;
+    TimeService *m_timeService;
+    MediaService *m_mediaService;
+    ScreenshotService *m_screenshotService;
+    WeatherService *m_weatherService;
 
-    // this controller manages the local interface
-    QLowEnergyController *m_controller;
     // this is for the remote (paired) device for reverse services
     // Note that it is ephemeral and only exists for the duration 
     // of the connection.
