@@ -1,13 +1,23 @@
 #ifndef BATTERYSERVICE_H
 #define BATTERYSERVICE_H
 
+#include "asteroid-btsyncd.h"
 #include <QObject>
 #include <QtBluetooth/QLowEnergyCharacteristic>
 #include <QtBluetooth/QLowEnergyCharacteristicData>
 #include <QtBluetooth/QLowEnergyServiceData>
 #include "BluetoothService.h"
-
+#ifdef DESKTOP_VERSION
+class BatteryStatus : public QObject {
+    Q_OBJECT
+public:
+    BatteryStatus(QObject *parent) {};
+signals:
+    void chargePercentageChanged(int percentage);
+};
+#else
 class BatteryStatus;
+#endif
 
 class BatteryService : public QObject {
     Q_OBJECT

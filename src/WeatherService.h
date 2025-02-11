@@ -1,6 +1,7 @@
 #ifndef WEATHERSERVICE_H
 #define WEATHERSERVICE_H
 
+#include "asteroid-btsyncd.h"
 #include <QObject>
 #include <QtBluetooth/QLowEnergyCharacteristic>
 #include <QtBluetooth/QLowEnergyCharacteristicData>

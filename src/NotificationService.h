@@ -1,6 +1,7 @@
 #ifndef NOTIFICATIONSERVICE_H
 #define NOTIFICATIONSERVICE_H
 
+#include "asteroid-btsyncd.h"
 #include <QObject>
 #include <QtBluetooth/QLowEnergyCharacteristic>
 #include <QtBluetooth/QLowEnergyCharacteristicData>

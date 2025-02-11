@@ -4,9 +4,10 @@
 #include <QtBluetooth/QLowEnergyDescriptorData>
 #include <QDateTime>
 #include <QTimeZone>
-
+#ifndef DESKTOP_VERSION
 #include <timed-qt5/wallclock>
 #include <timed-qt5/interface>
+#endif
 #include <QDebug>
 
 static const QBluetoothUuid TimeServiceUuid{QString{"00005071-0000-0000-0000-00A57E401D05"}};
@@ -30,7 +31,10 @@ void TimeService::onCharacteristicWritten(const QLowEnergyCharacteristic &charac
     int hour = (unsigned char) value[3];
     int minute = (unsigned char) value[4];
     int second = (unsigned char) value[5];
-
+#ifdef DESKTOP_VERSION
+    qDebug() << "Setting clock to" << year << "/" << month << "/" << day
+        << hour << ":" << minute << ":" << second;
+#else
     Maemo::Timed::WallClock::Settings s;
     QDateTime newTime(QDate(year, month, day), QTime(hour, minute, second));
     newTime.setTimeZone(QTimeZone::systemTimeZone());
@@ -38,6 +42,7 @@ void TimeService::onCharacteristicWritten(const QLowEnergyCharacteristic &charac
 
     Maemo::Timed::Interface timed;
     timed.wall_clock_settings_async(s);
+#endif
 }
 
 QLowEnergyServiceData TimeService::createTimeServiceData() {

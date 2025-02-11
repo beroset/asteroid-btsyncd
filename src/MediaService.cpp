@@ -15,6 +15,7 @@ static const QBluetoothUuid MediaCommandUuid{QString{"00007005-0000-0000-0000-00
 static const QBluetoothUuid MediaVolumeUuid{QString{"00007006-0000-0000-0000-00A57E401D05"}};
 
 MediaService::MediaService(BluetoothService &bluetoothService, QObject *parent) : QObject(parent) {
+#ifndef DESKTOP_VERSION
     m_player = new MprisPlayer(this);
     m_player->setServiceName("asteroid-btsyncd");
     m_player->setIdentity("Asteroid BLE Sync Daemon");
@@ -33,10 +34,11 @@ MediaService::MediaService(BluetoothService &bluetoothService, QObject *parent) 
     m_player->setPlaybackStatus(Mpris::Stopped);
     m_player->setLoopStatus(Mpris::None);
     m_player->setShuffle(false);
-
+#endif
     QLowEnergyServiceData serviceData = createMediaServiceData();
     m_service = bluetoothService.addService(serviceData);
     connect(m_service, &QLowEnergyService::characteristicChanged, this, &MediaService::onCharacteristicWritten);
+#ifndef DESKTOP_VERSION
     connect(m_player, &MprisPlayer::pauseRequested, this, &MediaService::pauseRequested);
     connect(m_player, &MprisPlayer::playRequested, this, &MediaService::playRequested);
     connect(m_player, &MprisPlayer::playPauseRequested, this, &MediaService::playPauseRequested);
@@ -44,6 +46,7 @@ MediaService::MediaService(BluetoothService &bluetoothService, QObject *parent) 
     connect(m_player, &MprisPlayer::nextRequested, this, &MediaService::nextRequested);
     connect(m_player, &MprisPlayer::previousRequested, this, &MediaService::previousRequested);
     connect(m_player, &MprisPlayer::volumeRequested, this, &MediaService::volumeRequested);
+#endif
 }
 
 QLowEnergyService* MediaService::service() const {
@@ -56,25 +59,35 @@ void MediaService::onCharacteristicWritten(const QLowEnergyCharacteristic &chara
     
     if (characteristic.uuid() == MediaTitleUuid) {
         qDebug() << "setting media Title to " << receivedString;
+#ifndef DESKTOP_VERSION
         QVariantMap metadata = m_player->metadata();
         metadata[Mpris::metadataToString(Mpris::Title)] = QString(value);
         m_player->setMetadata(metadata);
+#endif
     } else if (characteristic.uuid() == MediaAlbumUuid) {
         qDebug() << "setting media Album to " << receivedString;
+#ifndef DESKTOP_VERSION
         QVariantMap metadata = m_player->metadata();
         metadata[Mpris::metadataToString(Mpris::Album)] = QString(value);
         m_player->setMetadata(metadata);
+#endif
     } else if (characteristic.uuid() == MediaArtistUuid) {
         qDebug() << "setting media Artist to " << receivedString;
+#ifndef DESKTOP_VERSION
         QVariantMap metadata = m_player->metadata();
         metadata[Mpris::metadataToString(Mpris::Artist)] = QString(value);
         m_player->setMetadata(metadata);
+#endif
     } else if (characteristic.uuid() == MediaPlayingUuid) {
         qDebug() << "setting media Playing to " << (bool(value[0]));
+#ifndef DESKTOP_VERSION
         m_player->setPlaybackStatus(value[0] ? Mpris::Playing : Mpris::Paused);
+#endif
     } else if (characteristic.uuid() == MediaVolumeUuid) {
         qDebug() << "setting media Volume to " << (int( (unsigned char) value[0])/100.0);
+#ifndef DESKTOP_VERSION
         m_player->setVolume(int( (unsigned char) value[0])/100.0);
+#endif
     }
 }
 
@@ -146,7 +159,11 @@ void MediaService::playPauseRequested()
     qDebug() << "MediaService play/pause";
     QLowEnergyCharacteristic characteristic = m_service->characteristic(MediaCommandUuid);
     Q_ASSERT(characteristic.isValid());
+#ifndef DESKTOP_VERSION
     auto cmd = (m_player->playbackStatus() == Mpris::Playing ? MediaCommand::Pause : MediaCommand::Play);
+#else
+    int cmd = 0;
+#endif
     m_service->writeCharacteristic(characteristic, QByteArray(1, cmd));
 }
 

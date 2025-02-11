@@ -1,6 +1,7 @@
 #ifndef TIMESERVICE_H
 #define TIMESERVICE_H
 
+#include "asteroid-btsyncd.h"
 #include <QObject>
 #include <QtBluetooth/QLowEnergyCharacteristic>
 #include <QtBluetooth/QLowEnergyCharacteristicData>

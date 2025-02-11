@@ -1,4 +1,7 @@
+#include "asteroid-btsyncd.h"
+#ifndef DESKTOP_VERSION
 #include <giomm.h>
+#endif
 
 #include "WeatherService.h"
 #include <QtBluetooth/QBluetoothUuid>
@@ -28,6 +31,23 @@ QLowEnergyService* WeatherService::service() const {
 
 void WeatherService::onCharacteristicWritten(const QLowEnergyCharacteristic &characteristic, const QByteArray &value) 
 {
+#ifdef DESKTOP_VERSION
+    if (characteristic.uuid() == WeatherCityUuid) {
+        qDebug() << "city-name = " << value.data();
+    } else if (characteristic.uuid() == WeatherIdsUuid) {
+        for(int i = 0; i < 5; i++) {
+            qDebug() << "day[" << i << "].id = " << value;
+        }
+    } else if (characteristic.uuid() == WeatherMinTUuid) {
+        for(int i = 0; i < 5; i++) {
+            qDebug() << "day[" << i << "].min-temp = " << value;
+        }
+    } else if (characteristic.uuid() == WeatherMaxTUuid) {
+        for(int i = 0; i < 5; i++) {
+            qDebug() << "day[" << i << "].max-temp = " << value;
+        }
+    }
+#else
     if (characteristic.uuid() == WeatherCityUuid) {
         const Glib::RefPtr<Gio::Settings> settings = Gio::Settings::create("org.asteroidos.weather");
         settings->set_string("city-name", value.data());
@@ -50,6 +70,7 @@ void WeatherService::onCharacteristicWritten(const QLowEnergyCharacteristic &cha
             settings->set_int("max-temp", getQByteArrayInt(value, i));
         }
     }
+#endif
 }
 
 QLowEnergyServiceData WeatherService::createWeatherServiceData() {

@@ -1,5 +1,7 @@
 #include "BatteryService.h"
+#ifndef DESKTOP_VERSION
 #include <batterystatus.h>
+#endif
 #include <QtBluetooth/QBluetoothUuid>
 #include <QtBluetooth/QLowEnergyCharacteristicData>
 #include <QtBluetooth/QLowEnergyDescriptorData>
