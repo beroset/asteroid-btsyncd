@@ -1,6 +1,9 @@
 #include "Device.h"
 #include <unistd.h>
 
+static constexpr unsigned namesize{10};
+static char hostname[namesize];
+
 Device::Device(QObject *parent)
     : QObject(parent)
     , m_batteryService(m_bluetoothService, this)
@@ -11,8 +14,6 @@ Device::Device(QObject *parent)
     , m_screenshotService(m_bluetoothService, this)
     , m_weatherService(m_bluetoothService, this)
 {
-    static constexpr unsigned namesize{10};
-    char hostname[namesize];
     if (gethostname(hostname, namesize) != 0) {
         qCDebug(btsyncd) << "Unable to read hostname";
     }
@@ -23,12 +24,17 @@ Device::Device(QObject *parent)
 
 void Device::onDeviceDisconnected()
 {
-    delete m_remote;  // delete the existing one if it exists    
-    m_remote = nullptr;
+    if (m_remote) {
+        qDebug() << "Disconnecting from " << m_remote->remoteAddress();
+        delete m_remote;  // delete the existing one if it exists
+        m_remote = nullptr;
+    }
+    m_bluetoothService.startAdvertising(hostname);
 }
 
 void Device::onDeviceConnected(QBluetoothAddress remote, QBluetoothAddress local)
 {
-    delete m_remote;  // delete the existing one if it exists    
+    delete m_remote;  // delete the existing one if it exists
     m_remote = new Remote(remote, local, this);
+    qDebug() << "Connecting with " << remote << " from " << local;
 }
