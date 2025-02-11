@@ -42,6 +42,10 @@ else()
 	set_property(GLOBAL APPEND PROPERTY PACKAGES_NOT_FOUND giomm-2.4)
 endif()
 
+else()
+add_subdirectory(doc)
+endif()
+
 add_subdirectory(src)
 
 if (CMAKE_CROSSCOMPILING)
