@@ -8,21 +8,21 @@
 /*
  * This class is a version of QLowEnergyController for a specific purpose.
  *
- * When a device, such as a phone, is connected via Bluetooth Low Energy 
- * (BLE) to the watch, the phone is acting in the Central role, and the 
+ * When a device, such as a phone, is connected via Bluetooth Low Energy
+ * (BLE) to the watch, the phone is acting in the Central role, and the
  * watch is acting in the Peripheral role.
- * 
- * For most purposes, this works just fine with Qt, but there are some 
- * cases in which the QLowEnergyController class does not work.  One 
- * such instance is when implementing the Apple Notification Center 
- * Service.  This service allows the watch to display notifications 
- * from the phone.  However, this requires a role reversal in which 
- * the watch is Central and the phone is Peripheral and this is not 
- * currently supported by the existing QLowEnergyController class.  
  *
- * Another example is battery monitoring.  The watch implements a battery 
- * service that allows a connected Central device to read the state of the 
- * watch's battery.  However with this class it would also be possible for 
+ * For most purposes, this works just fine with Qt, but there are some
+ * cases in which the QLowEnergyController class does not work.  One
+ * such instance is when implementing the Apple Notification Center
+ * Service.  This service allows the watch to display notifications
+ * from the phone.  However, this requires a role reversal in which
+ * the watch is Central and the phone is Peripheral and this is not
+ * currently supported by the existing QLowEnergyController class.
+ *
+ * Another example is battery monitoring.  The watch implements a battery
+ * service that allows a connected Central device to read the state of the
+ * watch's battery.  However with this class it would also be possible for
  * the watch to monitor the state of the phone's battery as well.
  *
  */
@@ -31,17 +31,17 @@ class Remote : public QObject {
 
 public:
     // create a Remote object that acts mostly like a QLowEnergyController
-    explicit Remote(const QBluetoothAddress &remoteDevice, 
-                    const QBluetoothAddress &localDevice, 
+    explicit Remote(const QBluetoothAddress &remoteDevice,
+                    const QBluetoothAddress &localDevice,
                     QObject *parent = nullptr);
     virtual ~Remote();
-    // connect to the Bluetooth Low Energy device.  
+    // connect to the Bluetooth Low Energy device.
     // The connected() signal is emitted once the connection is established.
     void connectToDevice();
     // create an instance of the service represented by serviceUuid.
-    QLowEnergyService *createServiceObject(const QBluetoothUuid &serviceUuid, 
+    QLowEnergyService *createServiceObject(const QBluetoothUuid &serviceUuid,
                                            QObject *parent = nullptr);
-    // disconnect from the Bluetooth Low Energy device.  
+    // disconnect from the Bluetooth Low Energy device.
     // The disconnected() signal is emitted once the connection is established.
     void disconnectFromDevice();
     // returns the last occurred error or NoError
@@ -52,7 +52,7 @@ public:
     QBluetoothAddress localAddress() const;
     // the remote address
     QBluetoothAddress remoteAddress() const;
-    // Returns the type of remoteAddress(). By default, 
+    // Returns the type of remoteAddress(). By default,
     // this value is initialized to PublicAddress.
     QLowEnergyController::RemoteAddressType remoteAddressType() const;
     // Returns the unique identifier of the remote Bluetooth Low Energy device
@@ -71,7 +71,7 @@ signals:
     void disconnected();
     // This signal is emitted each time a new service is discovered
     void serviceDiscovered(const QBluetoothUuid &newService);
-    // This signal is emitted when the controller's state changes. 
+    // This signal is emitted when the controller's state changes.
     // The new state can also be retrieved via state()
     void stateChanged(QLowEnergyController::ControllerState state);
 
@@ -86,7 +86,7 @@ private:
     using InterfaceList = QMap<QString, QVariantMap>;
     QBluetoothAddress m_local;
     QBluetoothAddress m_remote;
-    QLowEnergyController::ControllerState m_state = 
+    QLowEnergyController::ControllerState m_state =
             QLowEnergyController::ControllerState::UnconnectedState;
     QLowEnergyController::Error m_error = QLowEnergyController::Error::NoError;
     QList<QBluetoothUuid> m_services;

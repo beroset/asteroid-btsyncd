@@ -19,8 +19,8 @@ static const QString DBUS_OM_IFACE = QStringLiteral("org.freedesktop.DBus.Object
 static const QString GATT_CHRC_IFACE = QStringLiteral("org.bluez.GattCharacteristic1");
 
 
-Remote::Remote(const QBluetoothAddress &remoteDevice, const QBluetoothAddress &localDevice, 
-        QObject *parent) 
+Remote::Remote(const QBluetoothAddress &remoteDevice, const QBluetoothAddress &localDevice,
+        QObject *parent)
     : QObject(parent)
     , m_local{localDevice}
     , m_remote{remoteDevice}
@@ -99,6 +99,35 @@ void Remote::connectToDevice() //QMap<QString, QVariantMap> dbusObject)
         return;
     }
     // gdbus call -y -d "org.bluez" -o /org/bluez/hci0/dev_98_69_8A_A7_E1_5B -m org.bluez.Device1.Connect
+}
+
+QLowEnergyController::Error Remote::error() const
+{
+    return m_error;
+}
+
+// returns a string representation of the last error
+QString Remote::errorString() const
+{
+    return QStringLiteral("No error");
+}
+
+QLowEnergyController::ControllerState Remote::state() const
+{
+    return m_state;
+}
+
+// disconnect from the Bluetooth Low Energy device.  The connected() signal is emitted once the connection is established.
+void Remote::disconnectFromDevice()
+{
+    m_services = {};
+}
+
+void Remote::discoverServices()
+{
+    // for each service on the remote
+    // issue serviceDiscovered()
+    // then issue discoveryFinished()
 #if 0
     if (!dbusObject.contains(DEVICE_MANAGER_IFACE)) {
         return false;
@@ -146,28 +175,6 @@ void Remote::connectToDevice() //QMap<QString, QVariantMap> dbusObject)
 #endif
 }
 
-QLowEnergyController::Error Remote::error() const
-{
-    return m_error;
-}
-
-// returns a string representation of the last error
-QString Remote::errorString() const
-{
-    return QStringLiteral("No error");
-}
-
-QLowEnergyController::ControllerState Remote::state() const
-{
-    return m_state;
-}
-
-// disconnect from the Bluetooth Low Energy device.  The connected() signal is emitted once the connection is established.
-void Remote::disconnectFromDevice()
-{
-    m_services = {};
-}
-
 #if 0
 void Remote::stateChanged(QLowEnergyController::ControllerState state)
 {
@@ -178,7 +185,7 @@ void Remote::checkForANCS(QBluetoothAddress remote, QBluetoothAddress local)
 {
     // gdbus call -y -d "org.bluez" -o /org/bluez/hci0/dev_98_69_8A_A7_E1_5B -m org.bluez.Device1.Connect
     // Although there is a connection made to the watch from another device,
-    // we also need to connect in the other direction to allow subscribing to 
+    // we also need to connect in the other direction to allow subscribing to
     // notifications.
     qCDebug(btsyncd) << "local address" << local
             << "remote address" << remote;
@@ -213,7 +220,7 @@ void Remote::checkForANCS(QBluetoothAddress remote, QBluetoothAddress local)
 #endif
     }
 }
-#endif 
+#endif
 
 #if 0
 void Remote::setController(QLowEnergyController *controller) {
