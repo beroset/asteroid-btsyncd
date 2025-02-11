@@ -15,12 +15,22 @@ BluetoothService::BluetoothService(QObject *parent) : QObject(parent) {
 }
 
 void BluetoothService::reset() {
-    // how should this work?  If I disconnect and reconnect,
-    // subsequent tries to read, say, the battery level gives 
-    // "The handle is invalid" on the phone from nRF connect.
+    // Disconnect signals
+    disconnect(m_controller, nullptr, this, nullptr);
+    disconnect(m_local, nullptr, this, nullptr);
+
+    // Delete existing objects
+    delete m_controller;
+    delete m_local;
+
+    // Clear services list
+    m_services.clear();
+
+    // Create new instances
     m_controller = QLowEnergyController::createPeripheral(this);
     m_local = new QBluetoothLocalDevice(this);
 
+    // Reconnect signals
     connect(m_controller, &QLowEnergyController::stateChanged, this, &BluetoothService::onControllerStateChanged);
     connect(m_controller, QOverload<QLowEnergyController::Error>::of(&QLowEnergyController::error), this, &BluetoothService::onErrorOccurred);
     connect(m_local, &QBluetoothLocalDevice::pairingFinished, this, &BluetoothService::onPairingFinished);
