@@ -39,13 +39,13 @@ Remote::Remote(const QBluetoothAddress &remoteDevice, const QBluetoothAddress &l
             argument.beginMapEntry();
             argument >> key >> dbusObject;
             argument.endMapEntry();
-            //qCDebug(btsyncd) << "key:{" << key << "}, dbusObject:{" << dbusObject << "}";
+            qCDebug(btsyncd) << "key:{" << key.path() << "}, dbusObject:{" << dbusObject << "}";
             if (dbusObject.contains(DEVICE_MANAGER_IFACE)) {
                 auto device{dbusObject[DEVICE_MANAGER_IFACE]};
                 QBluetoothAddress discoveredAddress{device.value(QStringLiteral("Address")).toString()};
                 if (remoteDevice == discoveredAddress) {
                     qCDebug(btsyncd) << "remoteDevice:{" << remoteDevice  << "}";
-                    remoteDBusObject = dbusObject;
+                    remote_path = key.path();
                 }
                 else if (localDevice == discoveredAddress) {
                     qCDebug(btsyncd) << "localDevice:{" << localDevice << "}";

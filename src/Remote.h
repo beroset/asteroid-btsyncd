@@ -59,6 +59,14 @@ public:
     QBluetoothUuid remoteDeviceUuid() const;
     // Returns the name of the remote Bluetooth Low Energy device
     QString remoteName() const;
+    /**
+     * Discover the services on the remote device.
+     *
+     * This emits the discoveryFinished() signal when complete,
+     * and also emits a serviceDiscovered() signal for each
+     * identified service.
+     */
+    void discoverServices();
     // Returns the list of services offered by the remote device
     QList<QBluetoothUuid> services() const;
     // Returns the current state of the controller
@@ -69,6 +77,8 @@ signals:
     void connected();
     // emitted when the remote BLE device is disconnected.
     void disconnected();
+    // Emitted when the discoverServices() function has completed
+    void discoveryFinished();
     // This signal is emitted each time a new service is discovered
     void serviceDiscovered(const QBluetoothUuid &newService);
     // This signal is emitted when the controller's state changes.
@@ -91,7 +101,7 @@ private:
     QLowEnergyController::Error m_error = QLowEnergyController::Error::NoError;
     QList<QBluetoothUuid> m_services;
     QString m_name;
-    InterfaceList remoteDBusObject;
+    QString remote_path;
     InterfaceList localDBusObject;
 };
 #endif // REMOTE_H
