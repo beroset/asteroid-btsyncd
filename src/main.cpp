@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+#include "asteroid-btsyncd.h"
 #include <QCoreApplication>
 #include <QtCore/QLoggingCategory>
 #include <QDebug>
@@ -24,6 +25,7 @@ Q_LOGGING_CATEGORY(btsyncd, "asteroid-btsyncd")
 int main(int argc, char *argv[]) {
     //QLoggingCategory::setFilterRules(QStringLiteral("qt.bluetooth* = true;*.debug=true"));
     QCoreApplication app(argc, argv);
+    QCoreApplication::setApplicationVersion(ASTEROID_BTSYNCD_VERSION);
 
     Device device;
 
