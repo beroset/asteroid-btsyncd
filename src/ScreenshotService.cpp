@@ -18,9 +18,19 @@ static const QString SCREENSHOT_MAIN_IFACE = QStringLiteral("org.nemomobile.lips
 static const QString SCREENSHOT_PATH_BASE = QStringLiteral("/org/nemomobile/lipstick/screenshot");
 
 ScreenshotService::ScreenshotService(BluetoothService &bluetoothService, QObject *parent) : QObject(parent) {
+    add(bluetoothService);
+}
+
+void ScreenshotService::add(BluetoothService &bluetoothService)
+{
     QLowEnergyServiceData serviceData = createScreenshotServiceData();
     m_service = bluetoothService.addService(serviceData);
     connect(m_service, &QLowEnergyService::characteristicChanged, this, &ScreenshotService::onCharacteristicWritten);
+}
+
+void ScreenshotService::remove()
+{
+    disconnect(m_service, nullptr, this, nullptr);
 }
 
 QLowEnergyService* ScreenshotService::service() const {

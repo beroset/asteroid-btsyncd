@@ -6,10 +6,20 @@
 HeartRateService::HeartRateService(BluetoothService &bluetoothService, QObject *parent) : QObject(parent) {
     m_hrm = new QHrmSensor(this);
     m_hrm->start();
+    add(bluetoothService);
+}
+
+void HeartRateService::add(BluetoothService &bluetoothService)
+{
     QLowEnergyServiceData serviceData = createHeartRateServiceData();
     connect(m_hrm, &QHrmSensor::statusChanged,
         this, &HeartRateService::onStatusChanged);
     m_service = bluetoothService.addService(serviceData);
+}
+
+void HeartRateService::remove()
+{
+    disconnect(m_hrm, nullptr, this, nullptr);
 }
 
 void HeartRateService::onStatusChanged(QHrmSensor::Status status) {

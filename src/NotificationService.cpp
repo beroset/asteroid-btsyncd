@@ -16,11 +16,21 @@ static const QString NOTIFICATIONS_PATH_BASE = QStringLiteral("/org/freedesktop/
 
 
 NotificationService::NotificationService(BluetoothService &bluetoothService, QObject *parent) : QObject(parent) {
+    add(bluetoothService);
+}
+
+void NotificationService::add(BluetoothService &bluetoothService)
+{
     QLowEnergyServiceData serviceData = createNotificationServiceData();
     m_service = bluetoothService.addService(serviceData);
     connect(m_service, &QLowEnergyService::characteristicChanged, this, &NotificationService::onCharacteristicWritten);
     QDBusConnection::sessionBus().connect(NOTIFICATIONS_SERVICE_NAME, NOTIFICATIONS_PATH_BASE,
         NOTIFICATIONS_MAIN_IFACE, "NotificationClosed", this, SLOT(onNotificationClosed(uint, uint)));
+}
+
+void NotificationService::remove()
+{
+    disconnect(m_service, nullptr, this, nullptr);
 }
 
 QLowEnergyService* NotificationService::service() const {

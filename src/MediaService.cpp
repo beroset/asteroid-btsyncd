@@ -35,6 +35,11 @@ MediaService::MediaService(BluetoothService &bluetoothService, QObject *parent) 
     m_player->setLoopStatus(Mpris::None);
     m_player->setShuffle(false);
 #endif
+    add(bluetoothService);
+}
+
+void MediaService::add(BluetoothService &bluetoothService)
+{
     QLowEnergyServiceData serviceData = createMediaServiceData();
     m_service = bluetoothService.addService(serviceData);
     connect(m_service, &QLowEnergyService::characteristicChanged, this, &MediaService::onCharacteristicWritten);
@@ -46,6 +51,14 @@ MediaService::MediaService(BluetoothService &bluetoothService, QObject *parent) 
     connect(m_player, &MprisPlayer::nextRequested, this, &MediaService::nextRequested);
     connect(m_player, &MprisPlayer::previousRequested, this, &MediaService::previousRequested);
     connect(m_player, &MprisPlayer::volumeRequested, this, &MediaService::volumeRequested);
+#endif
+}
+
+void MediaService::remove()
+{
+    disconnect(m_service, nullptr, this, nullptr);
+#ifndef DESKTOP_VERSION
+    disconnect(m_player, nullptr, this, nullptr);
 #endif
 }
 

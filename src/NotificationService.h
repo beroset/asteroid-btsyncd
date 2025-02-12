@@ -14,6 +14,8 @@ class NotificationService : public QObject {
 
 public:
     explicit NotificationService(BluetoothService &bluetoothService, QObject *parent = nullptr);
+    void add(BluetoothService &bluetoothService);
+    void remove();
     QLowEnergyService* service() const;
 
 private slots:

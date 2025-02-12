@@ -8,10 +8,20 @@
 
 BatteryService::BatteryService(BluetoothService &bluetoothService, QObject *parent) : QObject(parent) {
     m_battery = new BatteryStatus(this);
+    add(bluetoothService);
+};
+
+void BatteryService::add(BluetoothService &bluetoothService)
+{
     QLowEnergyServiceData serviceData = createBatteryServiceData();
     connect(m_battery, &BatteryStatus::chargePercentageChanged,
             this, &BatteryService::onBatteryPercentageChanged);
     m_service = bluetoothService.addService(serviceData);
+}
+
+void BatteryService::remove()
+{
+    disconnect(m_battery, nullptr, this, nullptr);
 }
 
 void BatteryService::onBatteryPercentageChanged(int percentage)

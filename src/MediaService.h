@@ -16,6 +16,8 @@ class MediaService : public QObject {
 
 public:
     explicit MediaService(BluetoothService &bluetoothService, QObject *parent = nullptr);
+    void add(BluetoothService &bluetoothService);
+    void remove();
     QLowEnergyService* service() const;
 
 public slots:

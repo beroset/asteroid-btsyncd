@@ -20,9 +20,19 @@ static int getQByteArrayInt(QByteArray arr, int index) {
 }
 
 WeatherService::WeatherService(BluetoothService &bluetoothService, QObject *parent) : QObject(parent) {
+    add(bluetoothService);
+}
+
+void WeatherService::add(BluetoothService &bluetoothService)
+{
     QLowEnergyServiceData serviceData = createWeatherServiceData();
     m_service = bluetoothService.addService(serviceData);
     connect(m_service, &QLowEnergyService::characteristicChanged, this, &WeatherService::onCharacteristicWritten);
+}
+
+void WeatherService::remove()
+{
+    disconnect(m_service, nullptr, this, nullptr);
 }
 
 QLowEnergyService* WeatherService::service() const {
