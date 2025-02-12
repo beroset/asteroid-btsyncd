@@ -27,7 +27,7 @@ private slots:
     void onDeviceDisconnected();
 private:
     // the BluetoothService drives everything else
-    BluetoothService m_bluetoothService;
+    BluetoothService *m_bluetoothService;
 
     // these are the basic included services
     BatteryService *m_batteryService;
