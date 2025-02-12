@@ -15,13 +15,15 @@ BluetoothService::BluetoothService(QObject *parent) : QObject(parent) {
 }
 
 void BluetoothService::reset() {
-    // Disconnect signals
-    disconnect(m_controller, nullptr, this, nullptr);
-    disconnect(m_local, nullptr, this, nullptr);
-
     // Delete existing objects
-    delete m_controller;
-    delete m_local;
+    if (m_controller) {
+        disconnect(m_controller, nullptr, this, nullptr);
+        m_controller->deleteLater();
+    }
+    if (m_local) {
+        disconnect(m_local, nullptr, this, nullptr);
+        m_local->deleteLater();
+    }
 
     // Clear services list
     m_services.clear();
@@ -48,17 +50,9 @@ void BluetoothService::startAdvertising(const QString &localName) {
     advertisingData.setDiscoverability(QLowEnergyAdvertisingData::DiscoverabilityGeneral);
     advertisingData.setIncludePowerLevel(false);
     advertisingData.setLocalName(localName);
-#if 0
-    QList<QBluetoothUuid> serviceUuids;
-    for (const auto &service : m_services) {
-        serviceUuids.append(service->serviceUuid());
-    }
-    advertisingData.setServices(serviceUuids);
-#else
     QList<QBluetoothUuid> serviceUuids;
     serviceUuids.append(AsteroidOSUuid);
     advertisingData.setServices(serviceUuids);
-#endif
 
     QLowEnergyAdvertisingParameters advertisingParameters{};
     advertisingParameters.setMode(QLowEnergyAdvertisingParameters::AdvInd);
@@ -69,7 +63,6 @@ void BluetoothService::startAdvertising(const QString &localName) {
 void BluetoothService::onControllerStateChanged(QLowEnergyController::ControllerState state) {
     if (state == QLowEnergyController::UnconnectedState) {
         qDebug() << "Peripheral disconnected.";
-        m_local->requestPairing(m_controller->remoteAddress(), QBluetoothLocalDevice::Unpaired);
         reset();
         emit deviceDisconnected();
     } else if (state == QLowEnergyController::AdvertisingState) {
@@ -84,7 +77,7 @@ void BluetoothService::onControllerStateChanged(QLowEnergyController::Controller
 }
 
 void BluetoothService::pairDevice(const QBluetoothAddress &address) {
-    if (m_local->pairingStatus(address) == QBluetoothLocalDevice::Paired || 
+    if (m_local->pairingStatus(address) == QBluetoothLocalDevice::Paired ||
         m_local->pairingStatus(address) == QBluetoothLocalDevice::AuthorizedPaired) {
         return;
     }
@@ -96,6 +89,6 @@ void BluetoothService::onErrorOccurred(QLowEnergyController::Error error) {
 }
 
 void BluetoothService::onPairingFinished(const QBluetoothAddress &address, QBluetoothLocalDevice::Pairing pairing) {
-    qDebug() << address << pairing;
+    qDebug() << "Pairing finished:" << address << pairing;
 }
 
