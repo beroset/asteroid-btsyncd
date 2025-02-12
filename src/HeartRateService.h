@@ -35,6 +35,7 @@ public:
 
 private slots:
     void onStatusChanged(QHrmSensor::Status status);
+    void onReadingChanged();
 
 private:
     QLowEnergyServiceData createHeartRateServiceData();

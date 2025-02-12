@@ -14,6 +14,8 @@ void HeartRateService::add(BluetoothService &bluetoothService)
     QLowEnergyServiceData serviceData = createHeartRateServiceData();
     connect(m_hrm, &QHrmSensor::statusChanged,
         this, &HeartRateService::onStatusChanged);
+    connect(m_hrm, &QHrmSensor::readingChanged,
+        this, &HeartRateService::onReadingChanged);
     m_service = bluetoothService.addService(serviceData);
 }
 
@@ -32,6 +34,20 @@ void HeartRateService::onStatusChanged(QHrmSensor::Status status) {
     char constexpr skin_contact_feature{0x4};
     char constexpr skin_contact_detected{0x6};
     char flag{status ? skin_contact_detected : skin_contact_feature};
+    bytes.append(flag);  // flag value
+    bytes.append(value);
+    m_service->writeCharacteristic(characteristic, bytes);
+}
+
+void HeartRateService::onReadingChanged()
+{
+    auto value = m_hrm->reading()->bpm();
+    qDebug() << "HRM:" << value << " bpm";
+    QLowEnergyCharacteristic characteristic = m_service->characteristic(QBluetoothUuid::HeartRateMeasurement);
+    Q_ASSERT(characteristic.isValid());
+    QByteArray bytes{};
+    char constexpr skin_contact_detected{0x6};
+    char flag{skin_contact_detected};
     bytes.append(flag);  // flag value
     bytes.append(value);
     m_service->writeCharacteristic(characteristic, bytes);
