@@ -15,11 +15,12 @@ public:
     struct Reading {
         int bpm() { return 62; }
     } rdg;
-    void start();
+    void start() {};
     Reading *reading() { return &rdg; }
     enum Status { NoContact, Unreliable, AccuracyLow, AccuracyMedium, AccuracyHigh};
 signals:
     void statusChanged(QHrmSensor::Status status);
+    void readingChanged();
 };
 #endif
 #include "BluetoothService.h"
