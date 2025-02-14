@@ -61,7 +61,7 @@ void Device::onDeviceConnected(QBluetoothAddress remote, QBluetoothAddress local
 {
     if (m_remote) {
         m_remote->deleteLater();  // delete the existing one if it exists
-        m_remote = new Remote(remote, local, this);
     }
     qDebug() << "Connecting with " << remote << " from " << local;
+    m_remote = new Remote(remote, local, this);
 }
