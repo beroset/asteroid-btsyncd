@@ -40,6 +40,7 @@ void Device::onDeviceDisconnected()
 
     disconnect(m_bluetoothService, nullptr, this, nullptr);
     m_bluetoothService->deleteLater();
+    m_remote->deleteLater();
     m_bluetoothService = new BluetoothService(this);
 
     m_batteryService->add(*m_bluetoothService);
@@ -59,9 +60,6 @@ void Device::onDeviceDisconnected()
 
 void Device::onDeviceConnected(QBluetoothAddress remote, QBluetoothAddress local)
 {
-    if (m_remote) {
-        m_remote->deleteLater();  // delete the existing one if it exists
-    }
     qDebug() << "Connecting with " << remote << " from " << local;
     m_remote = new Remote(remote, local, this);
 }
