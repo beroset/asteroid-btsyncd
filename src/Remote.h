@@ -34,16 +34,10 @@ public:
     explicit Remote(const QBluetoothAddress &remoteDevice,
                     const QBluetoothAddress &localDevice,
                     QObject *parent = nullptr);
-    virtual ~Remote();
-    // connect to the Bluetooth Low Energy device.
-    // The connected() signal is emitted once the connection is established.
-    void connectToDevice();
+    virtual ~Remote() override;
     // create an instance of the service represented by serviceUuid.
     QLowEnergyService *createServiceObject(const QBluetoothUuid &serviceUuid,
                                            QObject *parent = nullptr);
-    // disconnect from the Bluetooth Low Energy device.
-    // The disconnected() signal is emitted once the connection is established.
-    void disconnectFromDevice();
     // returns the last occurred error or NoError
     QLowEnergyController::Error error() const;
     // returns a string representation of the last error
@@ -55,30 +49,15 @@ public:
     // Returns the type of remoteAddress(). By default,
     // this value is initialized to PublicAddress.
     QLowEnergyController::RemoteAddressType remoteAddressType() const;
-    // Returns the unique identifier of the remote Bluetooth Low Energy device
-    QBluetoothUuid remoteDeviceUuid() const;
     // Returns the name of the remote Bluetooth Low Energy device
     QString remoteName() const;
-    /**
-     * Discover the services on the remote device.
-     *
-     * This emits the discoveryFinished() signal when complete,
-     * and also emits a serviceDiscovered() signal for each
-     * identified service.
-     */
-    void discoverServices();
+    QLowEnergyController::Role role() const;
     // Returns the list of services offered by the remote device
     QList<QBluetoothUuid> services() const;
     // Returns the current state of the controller
     QLowEnergyController::ControllerState state() const;
 
 signals:
-    // emitted when the remote BLE device is connected.
-    void connected();
-    // emitted when the remote BLE device is disconnected.
-    void disconnected();
-    // Emitted when the discoverServices() function has completed
-    void discoveryFinished();
     // This signal is emitted each time a new service is discovered
     void serviceDiscovered(const QBluetoothUuid &newService);
     // This signal is emitted when the controller's state changes.
