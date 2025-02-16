@@ -25,10 +25,8 @@ Device::Device(QObject *parent)
 
 void Device::onDeviceDisconnected()
 {
-    if (m_remote) {
-        qDebug() << "Disconnecting from " << m_remote->remoteAddress();
-        m_remote->deleteLater();  // delete the existing one if it exists
-    }
+    qDebug() << "Disconnecting from " << m_remote->remoteAddress();
+
     // unplug all of the services
     m_batteryService->remove();
     m_heartRateService->remove();
@@ -58,8 +56,22 @@ void Device::onDeviceDisconnected()
     m_bluetoothService->startAdvertising(hostname);
 }
 
+static const QBluetoothUuid ANCS_SERVICE_UUID{QStringLiteral("7905F431-B5CE-4E99-A40F-4B1E122D00D0")};
+
 void Device::onDeviceConnected(QBluetoothAddress remote, QBluetoothAddress local)
 {
     qDebug() << "Connecting with " << remote << " from " << local;
     m_remote = new Remote(remote, local, this);
+    connect(m_remote, &Remote::serviceDiscovered, this, &Device::onServiceDiscovered);
+    m_remote->discoverServices();
+}
+
+
+void Device::onServiceDiscovered(const QBluetoothUuid &newService)
+{
+    if (newService == ANCS_SERVICE_UUID) {
+        qDebug() << "ANCS discovered";
+    } else if (newService == QBluetoothUuid::BatteryService) {
+        qDebug() << "Battery service discovered";
+    }
 }

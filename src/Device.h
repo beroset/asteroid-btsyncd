@@ -25,6 +25,7 @@ public:
 private slots:
     void onDeviceConnected(QBluetoothAddress remote, QBluetoothAddress local);
     void onDeviceDisconnected();
+    void onServiceDiscovered(const QBluetoothUuid &newService);
 private:
     // the BluetoothService drives everything else
     BluetoothService *m_bluetoothService;
