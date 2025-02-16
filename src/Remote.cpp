@@ -6,7 +6,6 @@
 #include <QtCore/QLoggingCategory>
 #include <QDebug>
 
-static const QString ANCS_SERVICE_UUID = QStringLiteral("7905F431-B5CE-4E99-A40F-4B1E122D00D0");
 
 static const QString ANCS_NOTIFICATION_SOURCE_CHARACTERISTIC_UUID = QStringLiteral("9FBF120D-6301-42D9-8C58-25E699A21DBD");
 static const QString ANCS_CONTROL_POINT_CHARACTERISTIC_UUID = QStringLiteral("69D1D8F3-45E1-49A8-9821-9BBDFDAAD9D9");
@@ -39,7 +38,7 @@ Remote::Remote(const QBluetoothAddress &remoteDevice, const QBluetoothAddress &l
             argument.beginMapEntry();
             argument >> key >> dbusObject;
             argument.endMapEntry();
-            qCDebug(btsyncd) << "key:{" << key.path() << "}, dbusObject:{" << dbusObject << "}";
+            // qCDebug(btsyncd) << "key:{" << key.path() << "}, dbusObject:{" << dbusObject << "}";
             if (dbusObject.contains(DEVICE_MANAGER_IFACE)) {
                 auto device{dbusObject[DEVICE_MANAGER_IFACE]};
                     if (device.value(QStringLiteral("Connected")).toBool()) {
@@ -53,7 +52,8 @@ Remote::Remote(const QBluetoothAddress &remoteDevice, const QBluetoothAddress &l
                         localDBusObject = dbusObject;
                     }
                     for (const auto &service : device.value(QStringLiteral("UUIDs")).toStringList()) {
-                        m_services.push_back({QUuid{service}});
+                        QUuid uuid{service};
+                        m_services.push_back(uuid);
                     }
                     qCDebug(btsyncd) << "\n\n" << device.value(QStringLiteral("Alias")) 
                         << " --> " << m_services << "\n";
@@ -73,6 +73,13 @@ Remote::~Remote()
 QList<QBluetoothUuid> Remote::services() const
 {
     return m_services;
+}
+
+void Remote::discoverServices()
+{
+    for (const auto &svc : m_services) {
+        emit serviceDiscovered(svc);
+    }
 }
 
 // the local address

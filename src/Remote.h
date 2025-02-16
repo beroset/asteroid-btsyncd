@@ -38,6 +38,13 @@ public:
     // create an instance of the service represented by serviceUuid.
     QLowEnergyService *createServiceObject(const QBluetoothUuid &serviceUuid,
                                            QObject *parent = nullptr);
+    /**
+     *  pretend to discover services, but don't issue discoveryFinished signal
+     *
+     *  This works by simply emitting a serviceDiscovered() call for each
+     *  UUID in the services collection.
+     */
+    void discoverServices();
     // returns the last occurred error or NoError
     QLowEnergyController::Error error() const;
     // returns a string representation of the last error
