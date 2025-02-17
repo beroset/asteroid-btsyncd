@@ -10,7 +10,7 @@ set(SRC
         MediaService.cpp
         ScreenshotService.cpp
         WeatherService.cpp
-        ANCSService.cpp
+        RemoteService.cpp
 )
 
 set(HEADERS
@@ -24,7 +24,7 @@ set(HEADERS
         MediaService.h
         ScreenshotService.h
         WeatherService.h
-        ANCSService.h
+        RemoteService.h
 )
 
 add_executable(asteroid-btsyncd ${SRC} ${HEADERS})

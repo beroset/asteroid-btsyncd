@@ -64,6 +64,12 @@ Remote::Remote(const QBluetoothAddress &remoteDevice, const QBluetoothAddress &l
     }
 }
 
+RemoteService *Remote::createServiceObject(const QBluetoothUuid &serviceUuid,
+                                           QObject *parent)
+{
+    return new RemoteService{serviceUuid, parent};
+}
+
 Remote::~Remote()
 {
     m_services.clear();

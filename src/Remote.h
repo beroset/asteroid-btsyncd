@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QtBluetooth/QLowEnergyService>
 #include <QtBluetooth/QLowEnergyController>
+#include "RemoteService.h"
 
 /*
  * This class is a version of QLowEnergyController for a specific purpose.
@@ -36,7 +37,7 @@ public:
                     QObject *parent = nullptr);
     virtual ~Remote() override;
     // create an instance of the service represented by serviceUuid.
-    QLowEnergyService *createServiceObject(const QBluetoothUuid &serviceUuid,
+    RemoteService *createServiceObject(const QBluetoothUuid &serviceUuid,
                                            QObject *parent = nullptr);
     /**
      *  pretend to discover services, but don't issue discoveryFinished signal
