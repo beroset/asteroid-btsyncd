@@ -73,5 +73,7 @@ void Device::onServiceDiscovered(const QBluetoothUuid &newService)
         qDebug() << "ANCS discovered";
     } else if (newService == QBluetoothUuid::BatteryService) {
         qDebug() << "Battery service discovered";
+    } else {
+        qDebug() << "Other service discovered: " << newService;
     }
 }
