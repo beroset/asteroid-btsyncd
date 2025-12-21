@@ -6,7 +6,7 @@
 #include <QtBluetooth/QLowEnergyController>
 #include "RemoteService.h"
 
-/*
+/**
  * This class is a version of QLowEnergyController for a specific purpose.
  *
  * When a device, such as a phone, is connected via Bluetooth Low Energy
