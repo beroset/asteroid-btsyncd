@@ -34,7 +34,7 @@ bool forEachManagedObject(const QDBusConnection &bus, const QString &service, co
 
     const QDBusArgument argument = result.arguments().at(0).value<QDBusArgument>();
     if (argument.currentType() != QDBusArgument::MapType)
-        return true;
+        return false;
 
     argument.beginMap();
     while (!argument.atEnd()) {
