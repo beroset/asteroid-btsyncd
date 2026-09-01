@@ -22,10 +22,10 @@
 #include <QDBusPendingCall>
 #include <QDBusPendingCallWatcher>
 #include <QDBusPendingReply>
-#include <QDBusArgument>
 #include <QDebug>
 #include <QTimer>
 
+#include "bluezobjects.h"
 #include "common.h"
 
 BlueZManager::BlueZManager(QDBusObjectPath appPath, QDBusObjectPath advertPath, QObject *parent)
@@ -83,40 +83,26 @@ void BlueZManager::updateAdapter() {
     bool connected = false;
     bool servicesResolved = false;
 
-    QDBusInterface remoteOm(BLUEZ_SERVICE_NAME, "/", DBUS_OM_IFACE, mBus);
-    QDBusMessage result = remoteOm.call("GetManagedObjects");
+    BluezObjects::forEachManagedObject(mBus, BLUEZ_SERVICE_NAME, "/",
+            [&](const QString &key, const BluezObjects::InterfaceList &value) {
+        if (value.contains(GATT_MANAGER_IFACE) && value.contains(LE_ADVERTISING_MANAGER_IFACE))
+            adapter = key;
 
-    const QDBusArgument argument = result.arguments().at(0).value<QDBusArgument>();
-    if (argument.currentType() == QDBusArgument::MapType) {
-        argument.beginMap();
-        while (!argument.atEnd()) {
-            QString key;
-            InterfaceList value;
+        if (value.contains(DEVICE_MANAGER_IFACE)) {
+             mBus.connect(BLUEZ_SERVICE_NAME, key, DBUS_PROPERTIES_IFACE, "PropertiesChanged", this, SLOT(PropertiesChanged(QString, QMap<QString, QVariant>, QStringList)));
+             QMap<QString, QVariant> properties = value.value(DEVICE_MANAGER_IFACE);
+             if(properties.contains("Connected") && properties.value("Connected").toBool()) {
+                connected = true;
+                if(properties.contains("Alias")) {
+                   mConnectedDevice = properties.value("Alias").toString();
+                }
+             }
 
-            argument.beginMapEntry();
-            argument >> key >> value;
-            argument.endMapEntry();
+             if(properties.contains("ServicesResolved"))
+                servicesResolved |= properties.value("ServicesResolved").toBool();
 
-            if (value.contains(GATT_MANAGER_IFACE) && value.contains(LE_ADVERTISING_MANAGER_IFACE))
-                adapter = key;
-
-            if (value.contains(DEVICE_MANAGER_IFACE)) {
-                 mBus.connect(BLUEZ_SERVICE_NAME, key, DBUS_PROPERTIES_IFACE, "PropertiesChanged", this, SLOT(PropertiesChanged(QString, QMap<QString, QVariant>, QStringList)));
-                 QMap<QString, QVariant> properties = value.value(DEVICE_MANAGER_IFACE);
-                 if(properties.contains("Connected") && properties.value("Connected").toBool()) {
-                    connected = true;
-                    if(properties.contains("Alias")) {
-                       mConnectedDevice = properties.value("Alias").toString();
-                    }
-                 }
-
-                 if(properties.contains("ServicesResolved"))
-                    servicesResolved |= properties.value("ServicesResolved").toBool();
-
-            }
         }
-        argument.endMap();
-    }
+    });
 
     setAdapter(adapter);
     setConnected(connected);
