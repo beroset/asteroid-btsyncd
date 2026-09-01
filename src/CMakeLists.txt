@@ -15,9 +15,11 @@ set(
 	application.cpp
 	advertisement.cpp
 	bluezmanager.cpp
-	ancs.cpp
-	ancs_notification.cpp
-	cts.cpp
+	remote/bluezobjects.cpp
+	remote/remotecharacteristic.cpp
+	remote/ancs.cpp
+	remote/ancs_notification.cpp
+	remote/cts.cpp
 )
 set(
 	HEADERS
@@ -36,13 +38,16 @@ set(
 	application.h
 	advertisement.h
 	bluezmanager.h
-	ancs_protocol_constants.h
-	ancs.h
-	ancs_notification.h
-	cts.h
+	remote/bluezobjects.h
+	remote/remotecharacteristic.h
+	remote/ancs_protocol_constants.h
+	remote/ancs.h
+	remote/ancs_notification.h
+	remote/cts.h
 )
 
 add_executable(asteroid-btsyncd ${SRC} ${HEADERS})
+target_include_directories(asteroid-btsyncd PRIVATE remote)
 
 target_link_libraries(
 	asteroid-btsyncd
