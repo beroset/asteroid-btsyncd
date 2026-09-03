@@ -43,20 +43,22 @@ bool RemoteCharacteristic::find()
         return false;
     }
 
-    if (foundPath.isEmpty()) {
-        mObjectPath.clear();
-        return false;
-    }
-
     if (foundPath != mObjectPath) {
-        // Re-resolve subscription on the new object path, in case find() is
-        // called again after a reconnect and the path changed.
+        // The object path changed (including disappearing, e.g. on a
+        // disconnect, or reappearing elsewhere after a reconnect). Drop any
+        // subscription tied to the *previous* path first, while mObjectPath
+        // still refers to it, so stopNotify() disconnects the right D-Bus
+        // signal and clears mNotifying. If we instead overwrote mObjectPath
+        // first, a later stopNotify() would silently no-op on the new path
+        // and a subsequent startNotify() call would then also no-op because
+        // mNotifying would incorrectly still read true.
         if (mNotifying)
             stopNotify();
         mObjectPath = foundPath;
-        qDebug() << "RemoteCharacteristic: found" << mUuid << "at" << mObjectPath;
+        if (!mObjectPath.isEmpty())
+            qDebug() << "RemoteCharacteristic: found" << mUuid << "at" << mObjectPath;
     }
-    return true;
+    return !foundPath.isEmpty();
 }
 
 bool RemoteCharacteristic::isAvailable() const
@@ -92,7 +94,9 @@ void RemoteCharacteristic::writeValue(const QByteArray &value, const QVariantMap
     }
 
     QDBusInterface characteristic(BLUEZ_SERVICE_NAME, mObjectPath, GATT_CHRC_IFACE, mBus);
-    characteristic.call("WriteValue", value, QVariant::fromValue(options));
+    QDBusMessage response = characteristic.call("WriteValue", value, QVariant::fromValue(options));
+    if (response.type() == QDBusMessage::ErrorMessage)
+        qWarning() << "RemoteCharacteristic: WriteValue on" << mUuid << "failed:" << response.errorMessage();
 }
 
 void RemoteCharacteristic::startNotify()

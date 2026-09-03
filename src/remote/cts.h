@@ -9,6 +9,7 @@
 #include <QDateTime>
 
 #include "remotecharacteristic.h"
+#include "remotefeature.h"
 
 #define CTS_CHARACTERISTIC_UUID "00002a2b-0000-1000-8000-00805f9b34fb"
 
@@ -17,13 +18,13 @@
 // remotecharacteristic.h for why) rather than of QLowEnergyController. Its
 // own job is limited to parsing the CTS byte layout, as per:
 // https://www.bluetooth.com/specifications/specs/cts-1-1/
-class CTS: public QObject
+class CTS: public QObject, public RemoteFeature
 {
     Q_OBJECT
     public:
         CTS();
-        void searchForTimeCharacteristics();
-        void disconnect();
+        void search() override;
+        void disconnect() override;
     private slots:
         void onTimeValueChanged(const QByteArray &bytes);
     private:

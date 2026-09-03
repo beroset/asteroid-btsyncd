@@ -11,19 +11,20 @@
 
 #include "ancs_notification.h"
 #include "remotecharacteristic.h"
+#include "remotefeature.h"
 
 // ANCS talks to the phone's Apple Notification Center Service, which is
 // exposed by the *central* (the phone), not by us. It is a client of three
 // RemoteCharacteristic instances (see remotecharacteristic.h for why this
 // indirection exists) and otherwise only deals with ANCS protocol
 // parsing/encoding of the QByteArray payloads it receives/sends.
-class ANCS: public QObject
+class ANCS: public QObject, public RemoteFeature
 {
     Q_OBJECT
 public:
     ANCS();
-    void searchForAncsCharacteristics();
-    void disconnect();
+    void search() override;
+    void disconnect() override;
 private slots:
     void onNotificationValueChanged(const QByteArray &bytes);
     void onDataValueChanged(const QByteArray &bytes);

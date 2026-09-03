@@ -23,8 +23,11 @@
 #include <QDBusServiceWatcher>
 #include <QDBusConnection>
 
-#include "ancs.h"
-#include "cts.h"
+#include <vector>
+
+#include "remote/ancs.h"
+#include "remote/cts.h"
+#include "remote/remotefeature.h"
 
 typedef QMap<QString, QMap<QString, QVariant>> InterfaceList;
 
@@ -43,6 +46,7 @@ private:
     QDBusConnection mBus;
     ANCS mAncs;
     CTS mCts;
+    std::vector<RemoteFeature *> mRemoteFeatures;
 
     void updateAdapter();
     void setAdapter(QString adatper);

@@ -5,6 +5,7 @@
 #include <QDateTime>
 #include <QTimeZone>
 
+#include "gattbytes.h"
 #include "settime.h"
 
 CTS::CTS() : timeCharacteristic(CTS_CHARACTERISTIC_UUID) {
@@ -12,7 +13,7 @@ CTS::CTS() : timeCharacteristic(CTS_CHARACTERISTIC_UUID) {
             this, &CTS::onTimeValueChanged);
 }
 
-void CTS::searchForTimeCharacteristics() {
+void CTS::search() {
     qDebug() << "CTS searching for characteristic";
     if (timeCharacteristic.find()) {
         qDebug() << "Current Time Characteristic found";
@@ -35,15 +36,15 @@ void CTS::parseCurrentTime(QByteArray& bytes)
         qWarning() << "Current time value is not 10 bytes long";
         return;
     }
-    ushort year = (bytes[1] << 8)  + bytes[0];
+    ushort year = GattBytes::readLittleEndian<ushort>(bytes, 0, 2).value_or(0);
     uint8_t month = bytes[2];
     uint8_t day = bytes[3];
     uint8_t hour = bytes[4];
     uint8_t minute = bytes[5];
     uint8_t second = bytes[6];
-    uint8_t day_of_week = bytes[7];
-    uint8_t exact_time_256 = bytes[8];
-    uint8_t adjust_reason = bytes[9];
+    // Bytes 7-9 (day of week, 1/256th second fractional time, adjust
+    // reason) are part of the CTS spec's Exact Time 256 layout but are not
+    // needed to set the system clock, so they are intentionally not read.
 
     QDateTime newTime(QDate(year, month, day), QTime(hour, minute, second));
     newTime.setTimeZone(QTimeZone::systemTimeZone());

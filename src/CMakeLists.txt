@@ -11,6 +11,7 @@ set(
 	timeservice.cpp
 	service.cpp
 	characteristic.cpp
+	notifyingcharacteristic.cpp
 	descriptor.cpp
 	application.cpp
 	advertisement.cpp
@@ -33,6 +34,7 @@ set(
 	timeservice.h
 	service.h
 	characteristic.h
+	notifyingcharacteristic.h
 	descriptor.h
 	common.h
 	application.h
@@ -40,6 +42,8 @@ set(
 	bluezmanager.h
 	remote/bluezobjects.h
 	remote/remotecharacteristic.h
+	remote/remotefeature.h
+	remote/gattbytes.h
 	remote/ancs_protocol_constants.h
 	remote/ancs.h
 	remote/ancs_notification.h

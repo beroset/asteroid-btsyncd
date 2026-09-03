@@ -30,14 +30,17 @@ feature, living in two different places:
    The watch (still a BLE peripheral at the link layer) needs to read or
    subscribe to a characteristic that the *phone* exposes, e.g. ANCS
    notifications or the Current Time Service. These live under
-   `src/remote/`, and are built on top of a single shared helper class,
+   `src/remote/`, and are built on top of two small shared pieces:
    `RemoteCharacteristic` (`src/remote/remotecharacteristic.{h,cpp}`), which
    hides all of the BlueZ D-Bus plumbing (`GetManagedObjects` scanning,
    UUID matching, `PropertiesChanged` subscription, `StartNotify`/
-   `ReadValue`/`WriteValue`). See `src/remote/remotecharacteristic.h` for the
-   full rationale. **Any new feature that needs to talk to a characteristic
-   on the connected phone should use `RemoteCharacteristic` instead of
-   re-implementing BlueZ D-Bus calls.**
+   `ReadValue`/`WriteValue`); and `RemoteFeature`
+   (`src/remote/remotefeature.h`), the common `search()`/`disconnect()`
+   interface `BlueZManager` drives every reverse-direction feature through.
+   See `src/remote/remotecharacteristic.h` for the full rationale. **Any new
+   feature that needs to talk to a characteristic on the connected phone
+   should use `RemoteCharacteristic` and implement `RemoteFeature` instead
+   of re-implementing BlueZ D-Bus calls.**
 
 Knowing which of these two directions your feature needs is the first and
 most important design decision; the two examples below cover one of each.
@@ -56,16 +59,31 @@ most important design decision; the two examples below cover one of each.
   `ServicesResolved` has become true for that connection.
   `BlueZManager::onServicesResolvedChanged()` is the trigger point for
   *reverse*-direction discovery: once the phone's own GATT services have
-  been resolved, this is where each reverse-direction feature's
-  `searchForXyzCharacteristics()` is kicked off, and
-  `BlueZManager::onConnectedChanged()` is where each such feature is told to
-  `disconnect()`/reset when the phone goes away. **A new reverse-direction
-  feature must be added here** as a member of `BlueZManager`, wired into
-  both of these methods, alongside the existing `ANCS mAncs` and `CTS mCts`.
+  been resolved, this is where every reverse-direction feature's
+  `search()` is called, and `BlueZManager::onConnectedChanged()` is where
+  every such feature is told to `disconnect()`/reset when the phone goes
+  away. Both methods simply loop over `mRemoteFeatures`, a
+  `std::vector<RemoteFeature *>` (see `src/remote/remotefeature.h`) — they
+  do not call out to `ANCS`/`CTS`/etc. by name. **A new reverse-direction
+  feature must implement the `RemoteFeature` interface** (`search()` and
+  `disconnect()`) and be added to that list in `BlueZManager`'s
+  constructor, alongside the existing `&mAncs` and `&mCts`. No other
+  wiring changes are needed.
 - `src/common.h` holds all of the D-Bus interface name constants and all of
   this project's custom (non-standard) UUIDs. Standard Bluetooth SIG UUIDs
   (like the ones used below) are conventionally defined next to the class
   that uses them instead, since they are not `org.asteroidos`-specific.
+- `NotifyingCharacteristic` (`src/notifyingcharacteristic.{h,cpp}`) is the
+  base class for peripheral-direction characteristics that just hold one
+  `QByteArray` value, serve it back via `ReadValue()`, and notify a
+  subscribed phone whenever it changes. It supplies `ReadValue()`,
+  `StartNotify()`/`StopNotify()` (no-ops — the value is always current), the
+  `valueChanged()` signal and the BlueZ `PropertiesChanged` D-Bus plumbing,
+  so a new "hold a value, notify on change" characteristic only needs to
+  call `setValue()` — see `BatteryLvlChrc` (`src/batteryservice.{h,cpp}`)
+  for the simplest example. Characteristics with different semantics (e.g.
+  write-only, or no notification) still derive directly from
+  `Characteristic`.
 
 ## Example 1 (reverse direction): reading the phone's battery level
 
@@ -97,18 +115,19 @@ reused by the watch's own, peripheral-direction `BatteryService`):
 #include <QObject>
 
 #include "remotecharacteristic.h"
+#include "remotefeature.h"
 
 // Reads the Battery Level characteristic (0x2A19) of the standard Battery
 // Service (0x180F) exposed by the connected phone. See
 // remotecharacteristic.h for why this talks to BlueZ directly instead of
 // using QLowEnergyController.
-class PhoneBattery : public QObject
+class PhoneBattery : public QObject, public RemoteFeature
 {
     Q_OBJECT
 public:
     PhoneBattery();
-    void searchForBatteryCharacteristic();
-    void disconnect();
+    void search() override;
+    void disconnect() override;
 
 signals:
     // percentage is 0-100, as defined by the Battery Level characteristic.
@@ -139,7 +158,7 @@ PhoneBattery::PhoneBattery() : levelCharacteristic(BATTERY_LVL_UUID)
             this, &PhoneBattery::onLevelValueChanged);
 }
 
-void PhoneBattery::searchForBatteryCharacteristic()
+void PhoneBattery::search()
 {
     qDebug() << "PhoneBattery searching for characteristic";
     if (levelCharacteristic.find()) {
@@ -167,8 +186,10 @@ void PhoneBattery::onLevelValueChanged(const QByteArray &bytes)
 
 This is the entire BlueZ/D-Bus-facing part of the feature: `find()`,
 `startNotify()`, `readValue()` and the `valueChanged` signal are all
-supplied by `RemoteCharacteristic`, so `PhoneBattery` only has to know the
-UUID to look for and how to interpret the one-byte payload.
+supplied by `RemoteCharacteristic`, and `search()`/`disconnect()` are the
+two methods `RemoteFeature` requires `BlueZManager` be able to call
+uniformly — so `PhoneBattery` only has to know the UUID to look for and how
+to interpret the one-byte payload.
 
 ### Step 2: decide what to do with the value
 
@@ -198,24 +219,17 @@ private:
     PhoneBattery mPhoneBattery;
 ```
 
-In `src/bluezmanager.cpp`:
+In `src/bluezmanager.cpp`'s constructor, add it to the `mRemoteFeatures`
+list that `onServicesResolvedChanged()`/`onConnectedChanged()` already loop
+over:
 
 ```cpp
-void BlueZManager::onServicesResolvedChanged() {
-    if (mServicesResolved) {
-        mAncs.searchForAncsCharacteristics();
-        mCts.searchForTimeCharacteristics();
-        mPhoneBattery.searchForBatteryCharacteristic();
-    }
-}
+mRemoteFeatures = { &mAncs, &mCts, &mPhoneBattery };
 ```
 
-and in `onConnectedChanged()`, alongside the existing
-`mAncs.disconnect(); mCts.disconnect();`:
-
-```cpp
-    mPhoneBattery.disconnect();
-```
+That's it — no changes to `onServicesResolvedChanged()` or
+`onConnectedChanged()` themselves are needed; they already call
+`search()`/`disconnect()` on every entry in `mRemoteFeatures`.
 
 ### Step 4: add it to the build
 
@@ -236,9 +250,13 @@ characteristic (`0x2A37`, notify-only). This is the ordinary direction that
 `QLowEnergyController`/Qt Bluetooth would also support, and this codebase's
 existing `BatteryService`/`BatteryLvlChrc` pair
 (`src/batteryservice.{h,cpp}`) is the pattern to copy: a small "status"
-class that owns the actual sensor/data source, and a `Characteristic`
-subclass that exposes its value over D-Bus/GATT and emits
-`PropertiesChanged` when it updates.
+class that owns the actual sensor/data source, and a
+`NotifyingCharacteristic` subclass (`src/notifyingcharacteristic.h`) that
+exposes its value over D-Bus/GATT and calls `setValue()` when it updates —
+`NotifyingCharacteristic` takes care of `ReadValue()`,
+`StartNotify()`/`StopNotify()` and sending BlueZ's `PropertiesChanged`
+signal, so there is no `emitPropertiesChanged()`/`m_value` boilerplate to
+write.
 
 ### Step 1: define the UUIDs
 
@@ -299,6 +317,7 @@ target provides (mirroring how `BatteryStatus` subscribes to MCE's
 
 #include <QObject>
 
+#include "notifyingcharacteristic.h"
 #include "service.h"
 
 #define HEART_RATE_UUID       "0000180D-0000-1000-8000-00805f9b34fb"
@@ -306,30 +325,17 @@ target provides (mirroring how `BatteryStatus` subscribes to MCE's
 
 class HeartRateStatus;
 
-class HeartRateMeasChrc : public Characteristic
+class HeartRateMeasChrc : public NotifyingCharacteristic
 {
     Q_OBJECT
-    Q_PROPERTY(QByteArray Value READ getValue NOTIFY valueChanged)
 public:
     HeartRateMeasChrc(QDBusConnection bus, int index, Service *service);
 
-public slots:
-    QByteArray ReadValue(QVariantMap) { return m_value; }
-    void StartNotify() {}
-    void StopNotify() {}
-
 private slots:
-    void emitPropertiesChanged();
     void onBpmChanged(int bpm);
-
-signals:
-    void valueChanged();
 
 private:
     HeartRateStatus *m_sensor;
-    QByteArray m_value;
-
-    QByteArray getValue() { return m_value; }
 };
 
 class HeartRateService : public Service
@@ -352,21 +358,18 @@ data later):
 ```cpp
 #include "heartratestatus.h"
 
-#include <QDBusMessage>
 #include <QDebug>
 
 #include "heartrateservice.h"
-#include "characteristic.h"
 #include "common.h"
 
 HeartRateMeasChrc::HeartRateMeasChrc(QDBusConnection bus, int index, Service *service)
-    : Characteristic(bus, index, HEART_RATE_MEAS_UUID, {"notify"}, service)
+    : NotifyingCharacteristic(bus, index, HEART_RATE_MEAS_UUID, {"notify"}, service,
+                              QByteArray(2, 0)) // flags=0, bpm=0 until first reading
 {
     m_sensor = new HeartRateStatus(this);
     connect(m_sensor, &HeartRateStatus::bpmChanged,
             this, &HeartRateMeasChrc::onBpmChanged);
-    connect(this, SIGNAL(valueChanged()), this, SLOT(emitPropertiesChanged()));
-    m_value = QByteArray(2, 0); // flags=0, bpm=0 until first reading
 }
 
 void HeartRateMeasChrc::onBpmChanged(int bpm)
@@ -375,24 +378,9 @@ void HeartRateMeasChrc::onBpmChanged(int bpm)
         qWarning() << "Heart rate value out of uint8 range, ignoring:" << bpm;
         return;
     }
-    m_value = QByteArray(1, 0);        // flags: uint8 bpm format, no other fields
-    m_value.append(static_cast<char>(bpm));
-    emit valueChanged();
-}
-
-void HeartRateMeasChrc::emitPropertiesChanged()
-{
-    QDBusConnection connection = QDBusConnection::systemBus();
-    QDBusMessage message = QDBusMessage::createSignal(getPath().path(),
-                                                      "org.freedesktop.DBus.Properties",
-                                                      "PropertiesChanged");
-    QVariantMap changedProperties;
-    changedProperties[QStringLiteral("Value")] = QVariant(m_value);
-    QList<QVariant> arguments;
-    arguments << QVariant(GATT_CHRC_IFACE) << QVariant(changedProperties) << QVariant(QStringList());
-    message.setArguments(arguments);
-    if (!connection.send(message))
-        qDebug() << "Failed to send DBus property notification signal";
+    QByteArray value(1, 0);        // flags: uint8 bpm format, no other fields
+    value.append(static_cast<char>(bpm));
+    setValue(value);
 }
 
 HeartRateService::HeartRateService(int index, QDBusConnection bus, QObject *parent)
@@ -434,8 +422,9 @@ discovers this new service on its own once BlueZ resolves our GATT tree —
 
 | Your feature needs to...                                   | Follow the pattern in...                              | Lives in           |
 |--------------------------------------------------------------|--------------------------------------------------------|---------------------|
-| Serve data/commands from the watch to the phone               | `BatteryService`/`BatteryLvlChrc` (or `NotificationService`, `WeatherService`, `MediaService`) | `src/*service.{h,cpp}` |
-| Read/write/subscribe to a characteristic the phone exposes    | `CTS`, `ANCS` via `RemoteCharacteristic`                | `src/remote/*.{h,cpp}` |
+| Serve a single value/notify it to the phone                   | `BatteryService`/`BatteryLvlChrc` via `NotifyingCharacteristic` | `src/*service.{h,cpp}` |
+| Serve data/commands with other shapes (write-only, no notify) | `NotificationService`, `WeatherService`, `MediaService` (`Characteristic` directly) | `src/*service.{h,cpp}` |
+| Read/write/subscribe to a characteristic the phone exposes    | `CTS`, `ANCS` via `RemoteCharacteristic` + `RemoteFeature` | `src/remote/*.{h,cpp}` |
 
 When in doubt: if BlueZ's `GetManagedObjects` result for the *phone* would
 contain the characteristic you care about, you want `RemoteCharacteristic`
