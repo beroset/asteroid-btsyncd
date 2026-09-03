@@ -146,3 +146,7 @@ void NotificationService::NotificationClosed(uint replacesId, uint) {
     if(id)
         mKnownAndroidNotifs.remove(id);
 }
+
+#include "serviceregistry.h"
+
+REGISTER_SERVICE(NotificationService)

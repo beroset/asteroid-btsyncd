@@ -92,3 +92,7 @@ WeatherService::WeatherService(int index, QDBusConnection bus, QObject *parent) 
     addCharacteristic(new WeatherMaxTempsChrc(bus, 2, this));
     addCharacteristic(new WeatherMinTempsChrc(bus, 3, this));
 }
+
+#include "serviceregistry.h"
+
+REGISTER_SERVICE(WeatherService)

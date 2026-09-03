@@ -51,8 +51,9 @@ most important design decision; the two examples below cover one of each.
   one `Advertisement`, and one `BlueZManager`, then runs the Qt event loop.
 - `Application` (`src/application.cpp`) owns the list of local `Service`
   objects and answers BlueZ's `GetManagedObjects` call for our own GATT
-  tree. **A new peripheral-direction service must be registered here** with
-  `addService(new MyService(nextIndex, bus))`.
+  tree. **A new peripheral-direction service self-registers** with the
+  `REGISTER_SERVICE(MyService)` macro (see `src/serviceregistry.h`) placed
+  in the service's own `.cpp` file; `Application` never needs editing.
 - `BlueZManager` (`src/bluezmanager.{h,cpp}`) watches BlueZ over D-Bus,
   finds a usable adapter, registers our `Application` and `Advertisement`
   with it, and tracks whether a central is connected and whether
@@ -63,14 +64,17 @@ most important design decision; the two examples below cover one of each.
   `search()` is called, and `BlueZManager::onConnectedChanged()` is where
   every such feature is told to `disconnect()`/reset when the phone goes
   away. Both methods simply loop over `mRemoteFeatures`, a
-  `std::vector<RemoteFeature *>` (see `src/remote/remotefeature.h`) — they
-  do not call out to `ANCS`/`CTS`/etc. by name. **A new reverse-direction
-  feature must implement the `RemoteFeature` interface** (`search()` and
-  `disconnect()`) and be added to that list in `BlueZManager`'s
-  constructor, alongside the existing `&mAncs` and `&mCts`. No other
-  wiring changes are needed.
+  `std::vector<std::unique_ptr<RemoteFeature>>` (see
+  `src/remote/remotefeature.h`) built once, at construction time, from
+  `RemoteFeatureRegistry::instance().createAll()` — they do not call out to
+  `ANCS`/`CTS`/etc. by name. **A new reverse-direction feature self-
+  registers** with the `REGISTER_REMOTE_FEATURE(MyFeature)` macro (see
+  `src/remote/remotefeatureregistry.h`) placed in the feature's own `.cpp`
+  file; `BlueZManager` never needs editing.
 - `src/common.h` holds all of the D-Bus interface name constants and all of
-  this project's custom (non-standard) UUIDs. Standard Bluetooth SIG UUIDs
+  this project's custom (non-standard) UUIDs, as `inline constexpr const
+  char *` (not `#define`) so they're type-checked, scoped, and visible to a
+  debugger. Standard Bluetooth SIG UUIDs
   (like the ones used below) are conventionally defined next to the class
   that uses them instead, since they are not `org.asteroidos`-specific.
 - `NotifyingCharacteristic` (`src/notifyingcharacteristic.{h,cpp}`) is the
@@ -100,8 +104,8 @@ Conveniently, `src/common.h` already defines these two UUIDs (they're
 reused by the watch's own, peripheral-direction `BatteryService`):
 
 ```cpp
-#define BATTERY_UUID      "0000180F-0000-1000-8000-00805f9b34fb"
-#define BATTERY_LVL_UUID  "00002a19-0000-1000-8000-00805f9b34fb"
+inline constexpr const char *BATTERY_UUID     = "0000180F-0000-1000-8000-00805f9b34fb";
+inline constexpr const char *BATTERY_LVL_UUID = "00002a19-0000-1000-8000-00805f9b34fb";
 ```
 
 ### Step 1: create the class, in `src/remote/`
@@ -207,29 +211,26 @@ void SomeConsumer::onPhoneBatteryLevelChanged(int percentage)
 }
 ```
 
-### Step 3: wire it into `BlueZManager`
+### Step 3: register it with `RemoteFeatureRegistry`
 
-In `src/bluezmanager.h`, add a member next to `mAncs`/`mCts`:
-
-```cpp
-#include "phonebattery.h"
-...
-private:
-    ...
-    PhoneBattery mPhoneBattery;
-```
-
-In `src/bluezmanager.cpp`'s constructor, add it to the `mRemoteFeatures`
-list that `onServicesResolvedChanged()`/`onConnectedChanged()` already loop
-over:
+Instead of editing `bluezmanager.h`/`.cpp`, register `PhoneBattery` with
+itself, at the bottom of `src/remote/phonebattery.cpp`:
 
 ```cpp
-mRemoteFeatures = { &mAncs, &mCts, &mPhoneBattery };
+#include "remotefeatureregistry.h"
+
+REGISTER_REMOTE_FEATURE(PhoneBattery)
 ```
 
-That's it — no changes to `onServicesResolvedChanged()` or
-`onConnectedChanged()` themselves are needed; they already call
-`search()`/`disconnect()` on every entry in `mRemoteFeatures`.
+`RemoteFeatureRegistry` (`src/remote/remotefeatureregistry.h`) is a small
+self-registration mechanism: `PhoneBattery` must be default-constructible
+and implement `RemoteFeature`, and this macro registers a factory for it as
+a static-initialization side effect of linking `phonebattery.cpp` in.
+`BlueZManager`'s constructor builds one instance of every registered
+feature via `RemoteFeatureRegistry::instance().createAll()` and stores them
+in `mRemoteFeatures`; `onServicesResolvedChanged()`/`onConnectedChanged()`
+already loop over that list calling `search()`/`disconnect()`. No changes
+to `bluezmanager.h`/`.cpp` are needed at all.
 
 ### Step 4: add it to the build
 
@@ -237,9 +238,9 @@ In `src/CMakeLists.txt`, add `remote/phonebattery.cpp` to `SRC` and
 `remote/phonebattery.h` to `HEADERS`, next to the other `remote/*` entries.
 
 That's the whole feature. No changes to `Application`, `Service`,
-`Characteristic` or `Advertisement` are needed, because the watch is not
-exposing anything new to the phone here — it's only reading something the
-phone already exposes.
+`Characteristic`, `Advertisement`, or `BlueZManager` are needed, because
+the watch is not exposing anything new to the phone here — it's only
+reading something the phone already exposes.
 
 ## Example 2 (peripheral direction): serving heart-rate data to the phone
 
@@ -267,8 +268,8 @@ to the class that uses them (see how `BATTERY_UUID`/`BATTERY_LVL_UUID` in
 `#define`s to `common.h`:
 
 ```cpp
-#define HEART_RATE_UUID       "0000180D-0000-1000-8000-00805f9b34fb"
-#define HEART_RATE_MEAS_UUID  "00002a37-0000-1000-8000-00805f9b34fb"
+inline constexpr const char *HEART_RATE_UUID      = "0000180D-0000-1000-8000-00805f9b34fb";
+inline constexpr const char *HEART_RATE_MEAS_UUID = "00002a37-0000-1000-8000-00805f9b34fb";
 ```
 
 ### Step 2: a status class that owns the sensor
@@ -320,8 +321,8 @@ target provides (mirroring how `BatteryStatus` subscribes to MCE's
 #include "notifyingcharacteristic.h"
 #include "service.h"
 
-#define HEART_RATE_UUID       "0000180D-0000-1000-8000-00805f9b34fb"
-#define HEART_RATE_MEAS_UUID  "00002a37-0000-1000-8000-00805f9b34fb"
+inline constexpr const char *HEART_RATE_UUID      = "0000180D-0000-1000-8000-00805f9b34fb";
+inline constexpr const char *HEART_RATE_MEAS_UUID = "00002a37-0000-1000-8000-00805f9b34fb";
 
 class HeartRateStatus;
 
@@ -397,16 +398,26 @@ whatever the spec says for the characteristic you're implementing.
 
 ### Step 4: register the new service
 
-In `src/application.cpp`:
+Instead of editing `application.cpp`, register `HeartRateService` with
+itself, at the bottom of `src/heartrateservice.cpp`:
 
 ```cpp
-#include "heartrateservice.h"
-...
-    addService(new HeartRateService(6, bus)); // next free index after ScreenshotService/TimeService
+#include "serviceregistry.h"
+
+REGISTER_SERVICE(HeartRateService)
 ```
 
-(pick the next unused index; see the existing `addService()` calls for the
-0-5 already in use).
+`ServiceRegistry` (`src/serviceregistry.h`) is a small self-registration
+mechanism: `HeartRateService` must have the usual
+`(int index, QDBusConnection bus, QObject *parent = 0)` constructor that
+every `Service` subclass already has, and this macro registers a factory
+for it as a static-initialization side effect of linking
+`heartrateservice.cpp` in. `Application`'s constructor builds one instance
+of every registered service — via `ServiceRegistry::instance().factories()`
+— assigning indices in registration order; that order is unspecified across
+translation units, but harmless, since a `Service`'s `index` is only ever
+used to build a unique D-Bus object path (see `src/service.cpp`) and has no
+other meaning. No changes to `application.h`/`.cpp` are needed at all.
 
 ### Step 5: add it to the build
 
@@ -414,9 +425,11 @@ In `src/CMakeLists.txt`, add `heartrateservice.cpp`/`heartratestatus.cpp` to
 `SRC` and the two headers to `HEADERS`, next to `batteryservice.cpp`/
 `batterystatus.cpp`.
 
-No `BlueZManager` changes are needed for this direction: the phone
-discovers this new service on its own once BlueZ resolves our GATT tree —
-`BlueZManager` only needs to know about *reverse*-direction features.
+No `Application` or `BlueZManager` changes are needed for this direction:
+`HeartRateService` self-registers with `ServiceRegistry`, and the phone
+discovers it on its own once BlueZ resolves our GATT tree — `BlueZManager`
+only needs to know about *reverse*-direction features (and those
+self-register too, via `RemoteFeatureRegistry`).
 
 ## Summary: which pattern to follow
 
@@ -427,7 +440,10 @@ discovers this new service on its own once BlueZ resolves our GATT tree —
 | Read/write/subscribe to a characteristic the phone exposes    | `CTS`, `ANCS` via `RemoteCharacteristic` + `RemoteFeature` | `src/remote/*.{h,cpp}` |
 
 When in doubt: if BlueZ's `GetManagedObjects` result for the *phone* would
-contain the characteristic you care about, you want `RemoteCharacteristic`
-and `src/remote/`. If you're inventing/exposing a characteristic that BlueZ
-should advertise for *our own* adapter, you want a `Service`/`Characteristic`
-subclass registered via `Application::addService()`.
+contain the characteristic you care about, you want `RemoteCharacteristic`,
+`RemoteFeature`, and `REGISTER_REMOTE_FEATURE` in `src/remote/`. If you're
+inventing/exposing a characteristic that BlueZ should advertise for *our
+own* adapter, you want a `Service`/`Characteristic` subclass registered
+with `REGISTER_SERVICE`. Either way, adding the feature only requires its
+own `.h`/`.cpp` files plus one line in `src/CMakeLists.txt` — no other
+existing file needs to change.

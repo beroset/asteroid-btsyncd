@@ -245,3 +245,7 @@ void ANCS::EnableFeedbackForPastNotifications()
 {
     noFeedbackForPastNotifications = false;
 }
+
+#include "remotefeatureregistry.h"
+
+REGISTER_REMOTE_FEATURE(ANCS)

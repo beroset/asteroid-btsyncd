@@ -43,3 +43,7 @@ BatteryService::BatteryService(int index, QDBusConnection bus, QObject *parent) 
 {
     addCharacteristic(new BatteryLvlChrc(bus, 0, this));
 }
+
+#include "serviceregistry.h"
+
+REGISTER_SERVICE(BatteryService)

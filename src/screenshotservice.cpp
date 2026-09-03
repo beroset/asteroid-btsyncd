@@ -67,3 +67,7 @@ ScreenshotService::ScreenshotService(int index, QDBusConnection bus, QObject *pa
     addCharacteristic(reqChrc);
     addCharacteristic(contChrc);
 }
+
+#include "serviceregistry.h"
+
+REGISTER_SERVICE(ScreenshotService)

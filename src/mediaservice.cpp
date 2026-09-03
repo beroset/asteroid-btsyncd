@@ -182,3 +182,7 @@ MediaService::MediaService(int index, QDBusConnection bus, QObject *parent) : Se
     connect(m_mprisPlayer, SIGNAL(previousRequested()), m_commandsChrc, SLOT(previousRequested()));
     connect(m_mprisPlayer, SIGNAL(volumeRequested(double)), m_commandsChrc, SLOT(volumeRequested(double)));
  }
+
+#include "serviceregistry.h"
+
+REGISTER_SERVICE(MediaService)

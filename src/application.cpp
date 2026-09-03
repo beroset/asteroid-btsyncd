@@ -16,12 +16,7 @@
  */
 
 #include "application.h"
-#include "notificationservice.h"
-#include "weatherservice.h"
-#include "mediaservice.h"
-#include "batteryservice.h"
-#include "screenshotservice.h"
-#include "timeservice.h"
+#include "serviceregistry.h"
 
 #include <QDBusMetaType>
 
@@ -29,12 +24,9 @@ Application::Application(QDBusConnection bus, QObject *parent) : QObject(parent)
 {
     mPath = "/";
 
-    addService(new NotificationService(0, bus));
-    addService(new WeatherService(1, bus));
-    addService(new MediaService(2, bus));
-    addService(new BatteryService(3, bus));
-    addService(new ScreenshotService(4, bus));
-    addService(new TimeService(5, bus));
+    int index = 0;
+    for (const ServiceRegistry::Factory &factory : ServiceRegistry::instance().factories())
+        addService(factory(bus, index++));
 
     qDBusRegisterMetaType<InterfaceList>();
     qDBusRegisterMetaType<ManagedObjectList>();

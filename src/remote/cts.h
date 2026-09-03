@@ -11,7 +11,7 @@
 #include "remotecharacteristic.h"
 #include "remotefeature.h"
 
-#define CTS_CHARACTERISTIC_UUID "00002a2b-0000-1000-8000-00805f9b34fb"
+inline constexpr const char *CTS_CHARACTERISTIC_UUID = "00002a2b-0000-1000-8000-00805f9b34fb";
 
 // CTS reads the Current Time Service exposed by the phone (the central), so
 // like ANCS it is a client of a RemoteCharacteristic (see
