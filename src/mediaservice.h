@@ -24,6 +24,7 @@
 
 using namespace Amber;
 
+#include "notifyingcharacteristic.h"
 #include "service.h"
 
 #define MEDIA_COMMAND_PREVIOUS 0x0
@@ -33,32 +34,27 @@ using namespace Amber;
 #define MEDIA_COMMAND_VOLUME   0x4
 
 
-class MediaCommandsChrc : public Characteristic
+class MediaCommandsChrc : public NotifyingCharacteristic
 {
     Q_OBJECT
-    Q_PROPERTY(QByteArray Value READ getValue NOTIFY valueChanged)
 
 public:
     MediaCommandsChrc(MprisPlayer *player, QDBusConnection bus, int index, Service *service)
-        : Characteristic(bus, index, MEDIA_COMM_UUID, {"encrypt-authenticated-notify"}, service), m_player(player)
-    {
-        m_value.resize(1);
-        connect(this, SIGNAL(valueChanged()), this, SLOT(emitPropertiesChanged()));
-    }
-
-signals:
-    void valueChanged();
-
-private slots:
-    void emitPropertiesChanged();
+        : NotifyingCharacteristic(bus, index, MEDIA_COMM_UUID, {"encrypt-authenticated-notify"}, service,
+                                  QByteArray(2, 0)),
+          m_player(player)
+    {}
 
 private:
     MprisPlayer *m_player;
-    QByteArray m_value;
 
-    QByteArray getValue()
+    // Sets command byte 0, preserving byte 1 (the volume command's data
+    // byte), and notifies.
+    void setCommand(char command)
     {
-        return m_value;
+        QByteArray value = getValue();
+        value[0] = command;
+        setValue(value);
     }
 
 public slots:
@@ -69,9 +65,6 @@ public slots:
     void nextRequested();
     void previousRequested();
     void volumeRequested(double volume);
-
-    void StartNotify() {}
-    void StopNotify() {}
 };
 
 class MediaService : public Service

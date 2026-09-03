@@ -35,6 +35,8 @@ BlueZManager::BlueZManager(QDBusObjectPath appPath, QDBusObjectPath advertPath, 
     mServicesResolved = false;
     mConnectedDevice = "";
 
+    mRemoteFeatures = { &mAncs, &mCts };
+
     mWatcher = new QDBusServiceWatcher(BLUEZ_SERVICE_NAME, QDBusConnection::systemBus());
     connect(mWatcher, SIGNAL(serviceRegistered(const QString&)), this, SLOT(serviceRegistered(const QString&)));
     connect(mWatcher, SIGNAL(serviceUnregistered(const QString&)), this, SLOT(serviceUnregistered(const QString&)));
@@ -188,8 +190,8 @@ void BlueZManager::onConnectedChanged()
         body = mConnectedDevice;
         appIcon = "ios-bluetooth-outline";
     } else {
-        mAncs.disconnect();
-        mCts.disconnect();
+        for (RemoteFeature *feature : mRemoteFeatures)
+            feature->disconnect();
         //% "Disconnected"
         summary = qtTrId("id-disconnected");
         body = "";
@@ -219,7 +221,7 @@ void BlueZManager::onConnectedChanged()
 
 void BlueZManager::onServicesResolvedChanged() {
     if (mServicesResolved) {
-        mAncs.searchForAncsCharacteristics();
-        mCts.searchForTimeCharacteristics();
+        for (RemoteFeature *feature : mRemoteFeatures)
+            feature->search();
     }
 }

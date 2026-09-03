@@ -20,6 +20,7 @@
 
 #include <QObject>
 
+#include "notifyingcharacteristic.h"
 #include "service.h"
 
 class ScreenshotReqChrc : public Characteristic
@@ -37,37 +38,17 @@ signals:
 };
 
 
-class ScreenshotContentChrc : public Characteristic
+class ScreenshotContentChrc : public NotifyingCharacteristic
 {
     Q_OBJECT
-    Q_PROPERTY(QByteArray Value READ getValue NOTIFY valueChanged)
 public:
-    ScreenshotContentChrc(QDBusConnection bus, int index, Service *service) : Characteristic(bus, index, SCREENSH_CON_UUID, {"encrypt-authenticated-read", "encrypt-authenticated-notify"}, service)
+    ScreenshotContentChrc(QDBusConnection bus, int index, Service *service)
+        : NotifyingCharacteristic(bus, index, SCREENSH_CON_UUID,
+                                  {"encrypt-authenticated-read", "encrypt-authenticated-notify"}, service)
     {}
 
 public slots:
-    QByteArray ReadValue(QVariantMap)
-    {
-        return m_value;
-    }
-
-    void StartNotify() {}
-    void StopNotify() {}
-
-private slots:
-    void emitPropertiesChanged();
     void onScreenshotTaken(QString);
-
-signals:
-    void valueChanged();
-
-private:
-    QByteArray m_value;
-
-    QByteArray getValue()
-    {
-        return m_value;
-    }
 };
 
 class ScreenshotService : public Service

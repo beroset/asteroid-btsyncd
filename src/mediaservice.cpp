@@ -91,67 +91,40 @@ public slots:
 
 void MediaCommandsChrc::pauseRequested()
 {
-    m_value[0] = MEDIA_COMMAND_PAUSE;
-    emit valueChanged();
+    setCommand(MEDIA_COMMAND_PAUSE);
 }
 
 void MediaCommandsChrc::playRequested()
 {
-    m_value[0] = MEDIA_COMMAND_PLAY;
-    emit valueChanged();
+    setCommand(MEDIA_COMMAND_PLAY);
 }
 
 void MediaCommandsChrc::playPauseRequested()
 {
-    if(m_player->playbackStatus() == Mpris::Playing)
-        m_value[0] = MEDIA_COMMAND_PAUSE;
-    else
-        m_value[0] = MEDIA_COMMAND_PLAY;
-
-    emit valueChanged();
+    setCommand(m_player->playbackStatus() == Mpris::Playing ? MEDIA_COMMAND_PAUSE : MEDIA_COMMAND_PLAY);
 }
 
 void MediaCommandsChrc::stopRequested()
 {
-    m_value[0] = MEDIA_COMMAND_PAUSE;
-    emit valueChanged();
+    setCommand(MEDIA_COMMAND_PAUSE);
 }
 
 void MediaCommandsChrc::nextRequested()
 {
-    m_value[0] = MEDIA_COMMAND_NEXT;
-    emit valueChanged();
+    setCommand(MEDIA_COMMAND_NEXT);
 }
 
 void MediaCommandsChrc::previousRequested()
 {
-    m_value[0] = MEDIA_COMMAND_PREVIOUS;
-    emit valueChanged();
+    setCommand(MEDIA_COMMAND_PREVIOUS);
 }
 
 void MediaCommandsChrc::volumeRequested(double volume)
 {
-    m_value[0] = MEDIA_COMMAND_VOLUME;
-    m_value[1] = volume*100;
-    emit valueChanged();
-}
-
-void MediaCommandsChrc::emitPropertiesChanged()
-{
-    QDBusConnection connection = QDBusConnection::systemBus();
-    QDBusMessage message = QDBusMessage::createSignal(getPath().path(),
-                                                      "org.freedesktop.DBus.Properties",
-                                                      "PropertiesChanged");
-
-    QVariantMap changedProperties;
-    changedProperties[QStringLiteral("Value")] = QVariant(m_value);
-
-    QList<QVariant> arguments;
-    arguments << QVariant(GATT_CHRC_IFACE) << QVariant(changedProperties) << QVariant(QStringList());
-    message.setArguments(arguments);
-
-    if (!connection.send(message))
-        qDebug() << "Failed to send DBus property notification signal";
+    QByteArray value = getValue();
+    value[0] = MEDIA_COMMAND_VOLUME;
+    value[1] = static_cast<char>(volume * 100);
+    setValue(value);
 }
 
 class MediaVolumeChrc : public Characteristic

@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "ancs_protocol_constants.h"
+#include "gattbytes.h"
 
 #define TITLE_MAX_LENGTH 50
 #define MESSAGE_MAX_LENGTH 100
@@ -28,7 +29,7 @@ ANCS::ANCS() : notificationCharacteristic(ANCS_NOTIFICATION_SOURCE_CHARACTERISTI
     pastNotificationsTimer->setInterval(NO_FEEDBACK_FOR_PAST_NOTIFICATION_SECONDS * 1000);
 }
 
-void ANCS::searchForAncsCharacteristics()
+void ANCS::search()
 {
     qDebug() << "ANCS searching for characteristics";
     bool notificationFound = notificationCharacteristic.find();
@@ -68,12 +69,13 @@ void ANCS::append2Bytes(QByteArray &arr, unsigned int val)
 
 unsigned int ANCS::decodeNumber(const QByteArray &arr, int offset, int length)
 {
-    unsigned int result = 0;
-    for (int i = offset + length - 1; i >= offset; i--) {
-        result *= 256;
-        result += static_cast<unsigned char>(arr[i]);
+    auto value = GattBytes::readLittleEndian(arr, offset, length);
+    if (!value) {
+        qWarning() << "ANCS: decodeNumber out of bounds (offset" << offset << "length" << length
+                   << "in a" << arr.size() << "byte buffer)";
+        return 0;
     }
-    return result;
+    return *value;
 }
 
 

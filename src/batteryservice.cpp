@@ -18,47 +18,25 @@
 #include "batterystatus.h"
 
 #include <QTimer>
-#include <QDBusMessage>
 #include <QDebug>
 
 #include "batteryservice.h"
-#include "characteristic.h"
 #include "common.h"
 
-BatteryLvlChrc::BatteryLvlChrc(QDBusConnection bus, int index, Service *service) : Characteristic(bus, index, BATTERY_LVL_UUID, {"encrypt-authenticated-read", "encrypt-authenticated-notify"}, service)
+BatteryLvlChrc::BatteryLvlChrc(QDBusConnection bus, int index, Service *service)
+    : NotifyingCharacteristic(bus, index, BATTERY_LVL_UUID,
+                              {"encrypt-authenticated-read", "encrypt-authenticated-notify"}, service,
+                              QByteArray(1, 100))
 {
     m_battery = new BatteryStatus(this);
     connect(m_battery, &BatteryStatus::chargePercentageChanged,
             this, &BatteryLvlChrc::onBatteryPercentageChanged);
-    connect(this, SIGNAL(valueChanged()), this, SLOT(emitPropertiesChanged()));
-    m_value = QByteArray(1, 100);
 }
 
 void BatteryLvlChrc::onBatteryPercentageChanged(int percentage)
 {
-    if (percentage >= 0) {
-        m_value = QByteArray(1, percentage);
-
-        emit valueChanged();
-    }
-}
-
-void BatteryLvlChrc::emitPropertiesChanged()
-{
-    QDBusConnection connection = QDBusConnection::systemBus();
-    QDBusMessage message = QDBusMessage::createSignal(getPath().path(),
-                                                      "org.freedesktop.DBus.Properties",
-                                                      "PropertiesChanged");
-
-    QVariantMap changedProperties;
-    changedProperties[QStringLiteral("Value")] = QVariant(m_value);
-
-    QList<QVariant> arguments;
-    arguments << QVariant(GATT_CHRC_IFACE) << QVariant(changedProperties) << QVariant(QStringList());
-    message.setArguments(arguments);
-
-    if (!connection.send(message))
-        qDebug() << "Failed to send DBus property notification signal";
+    if (percentage >= 0)
+        setValue(QByteArray(1, percentage));
 }
 
 BatteryService::BatteryService(int index, QDBusConnection bus, QObject *parent) : Service(bus, index, BATTERY_UUID, parent)
