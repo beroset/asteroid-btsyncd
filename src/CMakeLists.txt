@@ -38,11 +38,13 @@ set(
 	descriptor.h
 	common.h
 	application.h
+	serviceregistry.h
 	advertisement.h
 	bluezmanager.h
 	remote/bluezobjects.h
 	remote/remotecharacteristic.h
 	remote/remotefeature.h
+	remote/remotefeatureregistry.h
 	remote/gattbytes.h
 	remote/ancs_protocol_constants.h
 	remote/ancs.h

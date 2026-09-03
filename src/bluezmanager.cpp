@@ -26,6 +26,7 @@
 #include <QTimer>
 
 #include "bluezobjects.h"
+#include "remote/remotefeatureregistry.h"
 #include "common.h"
 
 BlueZManager::BlueZManager(QDBusObjectPath appPath, QDBusObjectPath advertPath, QObject *parent)
@@ -35,7 +36,7 @@ BlueZManager::BlueZManager(QDBusObjectPath appPath, QDBusObjectPath advertPath, 
     mServicesResolved = false;
     mConnectedDevice = "";
 
-    mRemoteFeatures = { &mAncs, &mCts };
+    mRemoteFeatures = RemoteFeatureRegistry::instance().createAll();
 
     mWatcher = new QDBusServiceWatcher(BLUEZ_SERVICE_NAME, QDBusConnection::systemBus());
     connect(mWatcher, SIGNAL(serviceRegistered(const QString&)), this, SLOT(serviceRegistered(const QString&)));
@@ -190,7 +191,7 @@ void BlueZManager::onConnectedChanged()
         body = mConnectedDevice;
         appIcon = "ios-bluetooth-outline";
     } else {
-        for (RemoteFeature *feature : mRemoteFeatures)
+        for (const std::unique_ptr<RemoteFeature> &feature : mRemoteFeatures)
             feature->disconnect();
         //% "Disconnected"
         summary = qtTrId("id-disconnected");
@@ -221,7 +222,7 @@ void BlueZManager::onConnectedChanged()
 
 void BlueZManager::onServicesResolvedChanged() {
     if (mServicesResolved) {
-        for (RemoteFeature *feature : mRemoteFeatures)
+        for (const std::unique_ptr<RemoteFeature> &feature : mRemoteFeatures)
             feature->search();
     }
 }

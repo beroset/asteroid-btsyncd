@@ -56,3 +56,7 @@ void CTS::onTimeValueChanged(const QByteArray &bytes)
     QByteArray mutableBytes = bytes;
     parseCurrentTime(mutableBytes);
 }
+
+#include "remotefeatureregistry.h"
+
+REGISTER_REMOTE_FEATURE(CTS)

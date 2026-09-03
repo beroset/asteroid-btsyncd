@@ -45,3 +45,7 @@ TimeService::TimeService(int index, QDBusConnection bus, QObject *parent) : Serv
 {
     addCharacteristic(new TimeSetChrc(bus, 0, this));
 }
+
+#include "serviceregistry.h"
+
+REGISTER_SERVICE(TimeService)
