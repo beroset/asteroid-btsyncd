@@ -6,6 +6,8 @@ project(
 	DESCRIPTION "Bluetooth Low Energy synchronization daemon for AsteroidOS"
 )
 
+option(WITH_DOC "Create project documentation" OFF)
+
 find_package(ECM REQUIRED NO_MODULE)
 find_package(AsteroidApp6 REQUIRED)
 
@@ -24,6 +26,9 @@ pkg_check_modules(AmberMpris ambermpris6 REQUIRED IMPORTED_TARGET)
 pkg_check_modules(MLITE mlite6 REQUIRED IMPORTED_TARGET)
 
 add_subdirectory(src)
+if (WITH_DOC)
+    add_subdirectory(doc)
+endif()
 
 build_translations(i18n)
 
