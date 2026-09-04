@@ -42,11 +42,6 @@ int main(int argc, char **argv)
         fprintf(stderr, "Cannot connect to the D-Bus session bus.\n");
         return 2;
     }
-    /* if (!bus.registerService(SERVICE_NAME)) {
-        fprintf(stderr, "%s\n",
-                qPrintable(QDBusConnection::systemBus().lastError().message()));
-        exit(1);
-    } */
 
     Application app;
     Advertisement advert;
