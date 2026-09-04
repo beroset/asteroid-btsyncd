@@ -26,7 +26,7 @@
 #include <QString>
 
 #include "characteristic.h"
-#include "common.h"
+#define GATT_SERVICE_IFACE           "org.bluez.GattService1"
 
 class Service : public QObject
 {

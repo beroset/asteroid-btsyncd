@@ -23,7 +23,12 @@
 #include "settime.h"
 #include "timeservice.h"
 #include "characteristic.h"
-#include "common.h"
+
+inline constexpr const char *TIME_UUID         = "00005071-0000-0000-0000-00A57E401D05";
+inline constexpr const char *TIME_SET_UUID     = "00005001-0000-0000-0000-00A57E401D05";
+
+TimeSetChrc::TimeSetChrc(QDBusConnection bus, int index, Service *service)
+        : Characteristic(bus, index, TIME_SET_UUID, {"encrypt-authenticated-write"}, service) {}
 
 void TimeSetChrc::WriteValue(QByteArray value, QVariantMap)
 {

@@ -17,10 +17,13 @@
 
 #include "notificationservice.h"
 #include "characteristic.h"
-#include "common.h"
 
 #include <QDBusInterface>
 #include <QXmlStreamReader>
+
+inline constexpr const char *NOTIF_UUID        = "00009071-0000-0000-0000-00A57E401D05";
+inline constexpr const char *NOTI_UPD_UUID     = "00009001-0000-0000-0000-00A57E401D05";
+inline constexpr const char *NOTI_FDB_UUID     = "00009002-0000-0000-0000-00A57E401D05";
 
 class NotificationsUpdateChrc : public Characteristic
 {

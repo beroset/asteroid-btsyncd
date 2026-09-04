@@ -23,7 +23,7 @@
 #include <QDBusObjectPath>
 #include <QDBusConnection>
 
-#include "common.h"
+#define LE_ADVERTISEMENT_IFACE "org.bluez.LEAdvertisement1"
 
 class Advertisement : public QObject
 {

@@ -19,8 +19,13 @@
 
 #include "weatherservice.h"
 #include "characteristic.h"
-#include "common.h"
 #include <time.h>
+
+inline constexpr const char *WEATHER_UUID      = "00008071-0000-0000-0000-00A57E401D05";
+inline constexpr const char *WEAT_CITY_UUID    = "00008001-0000-0000-0000-00A57E401D05";
+inline constexpr const char *WEAT_IDS_UUID     = "00008002-0000-0000-0000-00A57E401D05";
+inline constexpr const char *WEAT_MINT_UUID    = "00008003-0000-0000-0000-00A57E401D05";
+inline constexpr const char *WEAT_MAXT_UUID    = "00008004-0000-0000-0000-00A57E401D05";
 
 int getQByteArrayInt(QByteArray arr, int index) {
     return (((unsigned char) arr[index * 2]) << 8) | ((unsigned char) arr[index * 2 + 1]);

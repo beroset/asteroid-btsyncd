@@ -3,7 +3,6 @@
 #include <QDebug>
 #include <QDateTime>
 
-#include "common.h"
 #include "ancs_protocol_constants.h"
 #include "gattbytes.h"
 

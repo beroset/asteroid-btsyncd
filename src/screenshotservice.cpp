@@ -22,7 +22,22 @@
 
 #include "screenshotservice.h"
 #include "characteristic.h"
-#include "common.h"
+
+inline constexpr const char *SCREENSHOT_SERVICE_NAME = "org.nemomobile.lipstick";
+inline constexpr const char *SCREENSHOT_MAIN_IFACE   = "org.nemomobile.lipstick";
+inline constexpr const char *SCREENSHOT_PATH_BASE    = "/org/nemomobile/lipstick/screenshot";
+
+inline constexpr const char *SCREENSH_UUID     = "00006071-0000-0000-0000-00A57E401D05";
+inline constexpr const char *SCREENSH_REQ_UUID = "00006001-0000-0000-0000-00A57E401D05";
+inline constexpr const char *SCREENSH_CON_UUID = "00006002-0000-0000-0000-00A57E401D05";
+
+ScreenshotReqChrc::ScreenshotReqChrc(QDBusConnection bus, int index, Service *service)
+    : Characteristic(bus, index, SCREENSH_REQ_UUID, {"encrypt-authenticated-write"}, service) {}
+
+ScreenshotContentChrc::ScreenshotContentChrc(QDBusConnection bus, int index, Service *service)
+    : NotifyingCharacteristic(bus, index, SCREENSH_CON_UUID,
+                              {"encrypt-authenticated-read", "encrypt-authenticated-notify"}, service)
+{}
 
 void ScreenshotReqChrc::WriteValue(QByteArray, QVariantMap)
 {

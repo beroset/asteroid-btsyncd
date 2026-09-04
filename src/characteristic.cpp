@@ -16,7 +16,6 @@
  */
 
 #include "characteristic.h"
-#include "common.h"
 #include "service.h"
 
 #include <QDebug>

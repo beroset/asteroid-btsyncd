@@ -17,6 +17,8 @@
 
 #include "advertisement.h"
 
+inline constexpr const char *ADVERTISEMENT_PATH_BASE = "/org/asteroidos/btsyncd/advertisement";
+
 Advertisement::Advertisement(QDBusConnection bus, QObject *parent) : QObject(parent), mBus(QDBusConnection::systemBus())
 {
     mPath = ADVERTISEMENT_PATH_BASE;

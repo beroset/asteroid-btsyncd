@@ -24,7 +24,7 @@
 #include <QString>
 #include <QByteArray>
 
-#include "common.h"
+#define GATT_DESC_IFACE              "org.bluez.GattDescriptor1"
 
 class Characteristic;
 

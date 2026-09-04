@@ -16,7 +16,7 @@
  */
 
 #include "service.h"
-#include "common.h"
+inline constexpr const char *SERVICE_PATH_BASE = "/org/asteroidos/btsyncd/service";
 
 Service::Service(QDBusConnection bus, unsigned int index, QString uuid, QObject *parent) : QObject(parent), mBus(QDBusConnection::systemBus())
 {
