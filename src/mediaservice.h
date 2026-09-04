@@ -27,35 +27,20 @@ using namespace Amber;
 #include "notifyingcharacteristic.h"
 #include "service.h"
 
-#define MEDIA_COMMAND_PREVIOUS 0x0
-#define MEDIA_COMMAND_NEXT     0x1
-#define MEDIA_COMMAND_PLAY     0x2
-#define MEDIA_COMMAND_PAUSE    0x3
-#define MEDIA_COMMAND_VOLUME   0x4
-
 
 class MediaCommandsChrc : public NotifyingCharacteristic
 {
     Q_OBJECT
 
 public:
-    MediaCommandsChrc(MprisPlayer *player, QDBusConnection bus, int index, Service *service)
-        : NotifyingCharacteristic(bus, index, MEDIA_COMM_UUID, {"encrypt-authenticated-notify"}, service,
-                                  QByteArray(2, 0)),
-          m_player(player)
-    {}
+    MediaCommandsChrc(MprisPlayer *player, QDBusConnection bus, int index, Service *service);
 
 private:
     MprisPlayer *m_player;
 
     // Sets command byte 0, preserving byte 1 (the volume command's data
     // byte), and notifies.
-    void setCommand(char command)
-    {
-        QByteArray value = getValue();
-        value[0] = command;
-        setValue(value);
-    }
+    void setCommand(char command);
 
 public slots:
     void pauseRequested();

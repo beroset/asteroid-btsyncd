@@ -16,7 +16,6 @@
  */
 
 #include "descriptor.h"
-#include "common.h"
 #include "characteristic.h"
 
 Descriptor::Descriptor(QDBusConnection bus, unsigned int index, QStringList flags, Characteristic *characteristic, QString uuid, QObject *parent) : QObject(parent), mBus(QDBusConnection::systemBus())

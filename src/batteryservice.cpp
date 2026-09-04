@@ -21,7 +21,9 @@
 #include <QDebug>
 
 #include "batteryservice.h"
-#include "common.h"
+
+inline constexpr const char *BATTERY_UUID      = "0000180F-0000-1000-8000-00805f9b34fb";
+inline constexpr const char *BATTERY_LVL_UUID  = "00002a19-0000-1000-8000-00805f9b34fb";
 
 BatteryLvlChrc::BatteryLvlChrc(QDBusConnection bus, int index, Service *service)
     : NotifyingCharacteristic(bus, index, BATTERY_LVL_UUID,

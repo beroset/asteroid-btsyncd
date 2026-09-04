@@ -28,6 +28,9 @@
 #include "bluezobjects.h"
 #include "remote/remotefeatureregistry.h"
 #include "common.h"
+inline constexpr const char *LE_ADVERTISING_MANAGER_IFACE = "org.bluez.LEAdvertisingManager1";
+inline constexpr const char *GATT_MANAGER_IFACE = "org.bluez.GattManager1";
+inline constexpr const char *DEVICE_MANAGER_IFACE = "org.bluez.Device1";
 
 BlueZManager::BlueZManager(QDBusObjectPath appPath, QDBusObjectPath advertPath, QObject *parent)
     : QObject(parent), mAppPath(appPath), mAdvertPath(advertPath), mAdapter("adapter"), mBus(QDBusConnection::systemBus())

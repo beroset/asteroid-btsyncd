@@ -19,59 +19,16 @@
 #define COMMON_H
 
 /* D-Bus paths and interfaces */
-#define SERVICE_NAME                 "org.asteroidos.btsyncd"
+/* These must be #define because they are each used in a Q_CLASSINFO macro */
+#define BLUEZ_SERVICE_NAME "org.bluez"
+#define DBUS_OM_IFACE      "org.freedesktop.DBus.ObjectManager"
+#define GATT_CHRC_IFACE    "org.bluez.GattCharacteristic1"
 
-#define BLUEZ_SERVICE_NAME           "org.bluez"
-#define GATT_MANAGER_IFACE           "org.bluez.GattManager1"
-#define DEVICE_MANAGER_IFACE         "org.bluez.Device1"
-#define DBUS_OM_IFACE                "org.freedesktop.DBus.ObjectManager"
-#define DBUS_PROPERTIES_IFACE        "org.freedesktop.DBus.Properties"
-#define LE_ADVERTISING_MANAGER_IFACE "org.bluez.LEAdvertisingManager1"
-#define LE_ADVERTISEMENT_IFACE       "org.bluez.LEAdvertisement1"
+/* These are not used in a Q_CLASSINFO macro */
+inline constexpr const char *DBUS_PROPERTIES_IFACE = "org.freedesktop.DBus.Properties";
 
-#define GATT_SERVICE_IFACE           "org.bluez.GattService1"
-#define GATT_CHRC_IFACE              "org.bluez.GattCharacteristic1"
-#define GATT_DESC_IFACE              "org.bluez.GattDescriptor1"
-
-#define SERVICE_PATH_BASE            "/org/asteroidos/btsyncd/service"
-#define ADVERTISEMENT_PATH_BASE      "/org/asteroidos/btsyncd/advertisement"
-
-#define NOTIFICATIONS_SERVICE_NAME   "org.freedesktop.Notifications"
-#define NOTIFICATIONS_MAIN_IFACE     "org.freedesktop.Notifications"
-#define NOTIFICATIONS_PATH_BASE      "/org/freedesktop/Notifications"
-
-#define SCREENSHOT_SERVICE_NAME      "org.nemomobile.lipstick"
-#define SCREENSHOT_MAIN_IFACE        "org.nemomobile.lipstick"
-#define SCREENSHOT_PATH_BASE         "/org/nemomobile/lipstick/screenshot"
-
-/* GATT Services and Characteristics UUIDs */
-
-inline constexpr const char *MEDIA_UUID        = "00007071-0000-0000-0000-00A57E401D05";
-inline constexpr const char *MEDIA_TITLE_UUID  = "00007001-0000-0000-0000-00A57E401D05";
-inline constexpr const char *MEDIA_ALBUM_UUID  = "00007002-0000-0000-0000-00A57E401D05";
-inline constexpr const char *MEDIA_ARTIST_UUID = "00007003-0000-0000-0000-00A57E401D05";
-inline constexpr const char *MEDIA_PLAY_UUID   = "00007004-0000-0000-0000-00A57E401D05";
-inline constexpr const char *MEDIA_COMM_UUID   = "00007005-0000-0000-0000-00A57E401D05";
-inline constexpr const char *MEDIA_VOL_UUID    = "00007006-0000-0000-0000-00A57E401D05";
-
-inline constexpr const char *NOTIF_UUID        = "00009071-0000-0000-0000-00A57E401D05";
-inline constexpr const char *NOTI_UPD_UUID     = "00009001-0000-0000-0000-00A57E401D05";
-inline constexpr const char *NOTI_FDB_UUID     = "00009002-0000-0000-0000-00A57E401D05";
-
-inline constexpr const char *WEATHER_UUID      = "00008071-0000-0000-0000-00A57E401D05";
-inline constexpr const char *WEAT_CITY_UUID    = "00008001-0000-0000-0000-00A57E401D05";
-inline constexpr const char *WEAT_IDS_UUID     = "00008002-0000-0000-0000-00A57E401D05";
-inline constexpr const char *WEAT_MINT_UUID    = "00008003-0000-0000-0000-00A57E401D05";
-inline constexpr const char *WEAT_MAXT_UUID    = "00008004-0000-0000-0000-00A57E401D05";
-
-inline constexpr const char *BATTERY_UUID      = "0000180F-0000-1000-8000-00805f9b34fb";
-inline constexpr const char *BATTERY_LVL_UUID  = "00002a19-0000-1000-8000-00805f9b34fb";
-
-inline constexpr const char *SCREENSH_UUID     = "00006071-0000-0000-0000-00A57E401D05";
-inline constexpr const char *SCREENSH_REQ_UUID = "00006001-0000-0000-0000-00A57E401D05";
-inline constexpr const char *SCREENSH_CON_UUID = "00006002-0000-0000-0000-00A57E401D05";
-
-inline constexpr const char *TIME_UUID         = "00005071-0000-0000-0000-00A57E401D05";
-inline constexpr const char *TIME_SET_UUID     = "00005001-0000-0000-0000-00A57E401D05";
+inline constexpr const char *NOTIFICATIONS_SERVICE_NAME = "org.freedesktop.Notifications";
+inline constexpr const char *NOTIFICATIONS_MAIN_IFACE = "org.freedesktop.Notifications";
+inline constexpr const char *NOTIFICATIONS_PATH_BASE = "/org/freedesktop/Notifications";
 
 #endif // COMMON_H

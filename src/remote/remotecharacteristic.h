@@ -47,12 +47,6 @@
 // this class at all.
 //
 // RemoteCharacteristic is the single, shared implementation of that pattern.
-// Before this class existed, ANCS (ancs.cpp) and CTS (cts.cpp) each
-// duplicated their own copy of: walk GetManagedObjects, match a
-// characteristic by UUID, subscribe to PropertiesChanged for "Value", call
-// StartNotify, and do an initial ReadValue. Any future feature that needs to
-// read/write/subscribe to a characteristic on the connected central should
-// use this class instead of re-implementing that D-Bus plumbing again.
 
 #include <QByteArray>
 #include <QDBusConnection>
