@@ -1,9 +1,10 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.28)
 
 project(
-	asteroid-btsyncd
-	VERSION 2.0
-	DESCRIPTION "Bluetooth Low Energy synchronization daemon for AsteroidOS"
+    asteroid-btsyncd
+    VERSION 2.0
+    DESCRIPTION "Bluetooth Low Energy synchronization daemon for AsteroidOS"
+    LANGUAGES CXX
 )
 
 option(WITH_DOC "Create project documentation" OFF)
