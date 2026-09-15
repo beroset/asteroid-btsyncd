@@ -30,11 +30,11 @@ inline constexpr const char *MEDIA_PLAY_UUID   = "00007004-0000-0000-0000-00A57E
 inline constexpr const char *MEDIA_COMM_UUID   = "00007005-0000-0000-0000-00A57E401D05";
 inline constexpr const char *MEDIA_VOL_UUID    = "00007006-0000-0000-0000-00A57E401D05";
 
-#define MEDIA_COMMAND_PREVIOUS 0x0
-#define MEDIA_COMMAND_NEXT     0x1
-#define MEDIA_COMMAND_PLAY     0x2
-#define MEDIA_COMMAND_PAUSE    0x3
-#define MEDIA_COMMAND_VOLUME   0x4
+inline constexpr unsigned int MEDIA_COMMAND_PREVIOUS = 0x0;
+inline constexpr unsigned int MEDIA_COMMAND_NEXT     = 0x1;
+inline constexpr unsigned int MEDIA_COMMAND_PLAY     = 0x2;
+inline constexpr unsigned int MEDIA_COMMAND_PAUSE    = 0x3;
+inline constexpr unsigned int MEDIA_COMMAND_VOLUME   = 0x4;
 
 MediaCommandsChrc::MediaCommandsChrc(MprisPlayer *player, QDBusConnection bus, int index, Service *service)
     : NotifyingCharacteristic(bus, index, MEDIA_COMM_UUID, {"encrypt-authenticated-notify"}, service,
