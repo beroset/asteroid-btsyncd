@@ -37,7 +37,7 @@ class Service : public QObject
     Q_PROPERTY(QList<QDBusObjectPath>  Characteristics READ getCharacteristicPaths())
 
 public:
-    explicit Service(QDBusConnection bus, unsigned int index, QString uuid, QObject *parent = 0);
+    explicit Service(QDBusConnection bus, unsigned int index, QString uuid, QObject *parent = nullptr);
     QDBusObjectPath getPath();
     void addCharacteristic(Characteristic *charac);
     QList<QDBusObjectPath> getCharacteristicPaths();

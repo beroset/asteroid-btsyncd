@@ -26,7 +26,7 @@ class NotificationService : public Service
 {
     Q_OBJECT
 public:
-    explicit NotificationService(int index, QDBusConnection bus, QObject *parent = 0);
+    explicit NotificationService(int index, QDBusConnection bus, QObject *parent = nullptr);
 
 private slots:
     void NotificationClosed(uint replacesId, uint);

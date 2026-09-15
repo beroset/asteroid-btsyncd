@@ -38,7 +38,7 @@ class Advertisement : public QObject
     Q_PROPERTY(bool Discoverable READ getDiscoverable())
 
 public:
-    explicit Advertisement(QDBusConnection bus = QDBusConnection::systemBus(), QObject *parent = 0);
+    explicit Advertisement(QDBusConnection bus = QDBusConnection::systemBus(), QObject *parent = nullptr);
     QDBusObjectPath getPath();
 
 private:

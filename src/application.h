@@ -37,7 +37,7 @@ class Application : public QObject
     Q_CLASSINFO("D-Bus Interface", DBUS_OM_IFACE)
 
 public:
-    Application(QDBusConnection bus = QDBusConnection::systemBus(), QObject *parent = 0);
+    Application(QDBusConnection bus = QDBusConnection::systemBus(), QObject *parent = nullptr);
     QDBusObjectPath getPath();
     void addService(Service *service);
 

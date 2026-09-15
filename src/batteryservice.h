@@ -42,7 +42,7 @@ class BatteryService : public Service
 {
     Q_OBJECT
 public:
-    explicit BatteryService(int index, QDBusConnection bus, QObject *parent = 0);
+    explicit BatteryService(int index, QDBusConnection bus, QObject *parent = nullptr);
 };
 
 #endif // BATTERYSERVICE_H

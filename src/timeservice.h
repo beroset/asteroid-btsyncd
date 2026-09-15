@@ -39,7 +39,7 @@ class TimeService : public Service
 {
     Q_OBJECT
 public:
-    explicit TimeService(int index, QDBusConnection bus, QObject *parent = 0);
+    explicit TimeService(int index, QDBusConnection bus, QObject *parent = nullptr);
 };
 
 #endif // TIMESERVICE_H

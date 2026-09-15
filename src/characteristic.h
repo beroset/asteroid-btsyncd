@@ -38,7 +38,7 @@ class Characteristic : public QObject
     Q_PROPERTY(QList<QDBusObjectPath> Descriptors READ getDescriptorPaths())
 
 public:
-    explicit Characteristic(QDBusConnection bus, unsigned int index, QString uuid, QStringList flags, Service *service, QObject *parent = 0);
+    explicit Characteristic(QDBusConnection bus, unsigned int index, QString uuid, QStringList flags, Service *service, QObject *parent = nullptr);
 
     QDBusObjectPath getPath();
 

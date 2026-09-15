@@ -51,7 +51,7 @@ class ScreenshotService : public Service
 {
     Q_OBJECT
 public:
-    explicit ScreenshotService(int index, QDBusConnection bus, QObject *parent = 0);
+    explicit ScreenshotService(int index, QDBusConnection bus, QObject *parent = nullptr);
 };
 
 #endif // SCREENSHOTSERVICE_H
