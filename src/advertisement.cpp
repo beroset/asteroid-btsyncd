@@ -17,17 +17,10 @@
 
 #include "advertisement.h"
 
-inline constexpr const char *ADVERTISEMENT_PATH_BASE = "/org/asteroidos/btsyncd/advertisement";
-
-Advertisement::Advertisement(QDBusConnection bus, QObject *parent) : QObject(parent), mBus(QDBusConnection::systemBus())
+Advertisement::Advertisement(QDBusConnection bus, QObject *parent)
+    : QObject{parent}
+    , mBus{bus}
 {
-    mPath = ADVERTISEMENT_PATH_BASE;
-    mBus = bus;
-    mAdType = "peripheral";
-    mIncludeTxPower = false;
-    addServiceUuid("00000000-0000-0000-0000-00a57e401d05");
-    mDiscoverable = true;
-
     bus.registerObject(mPath, this, QDBusConnection::ExportAllSlots | QDBusConnection::ExportAllProperties);
 }
 
@@ -36,52 +29,42 @@ QDBusObjectPath Advertisement::getPath()
     return QDBusObjectPath(mPath);
 }
 
-void Advertisement::addServiceUuid(QString uuid)
-{
-    mServiceUuids.append(uuid);
-}
-
-void Advertisement::addManufacturerData(unsigned int manufCode, QByteArray data)
-{
-    mManufacturerData.insert(manufCode, data);
-}
-
 void Advertisement::addServiceData(QString uuid, QByteArray data)
 {
     mServiceData.insert(uuid, data);
 }
 
-QString Advertisement::getType()
+QString Advertisement::getType() const
 {
     return mAdType;
 }
 
-QStringList Advertisement::getServiceUUIDs()
+QStringList Advertisement::getServiceUUIDs() const
 {
     return mServiceUuids;
 }
 
-QStringList Advertisement::getSolicitUUIDs()
+QStringList Advertisement::getSolicitUUIDs() const
 {
     return mSolicitUuids;
 }
 
-QMap<unsigned int, QByteArray> Advertisement::getManufacturerData()
+QMap<unsigned int, QByteArray> Advertisement::getManufacturerData() const
 {
     return mManufacturerData;
 }
 
-QMap<QString, QByteArray> Advertisement::getServiceData()
+QMap<QString, QByteArray> Advertisement::getServiceData() const
 {
     return mServiceData;
 }
 
-bool Advertisement::getIncludeTxPower()
+bool Advertisement::getIncludeTxPower() const
 {
     return mIncludeTxPower;
 }
 
-bool Advertisement::getDiscoverable()
+bool Advertisement::getDiscoverable() const
 {
     return mDiscoverable;
 }

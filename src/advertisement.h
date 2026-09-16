@@ -42,26 +42,25 @@ public:
     QDBusObjectPath getPath();
 
 private:
-    void addServiceUuid(QString uuid);
-    void addSolicitUuid(QString uuid);
     void addServiceData(QString uuid, QByteArray data);
-    void addManufacturerData(unsigned int manufCode, QByteArray data);
 
-    QString getType();
-    QStringList getServiceUUIDs();
-    QStringList getSolicitUUIDs();
-    QMap<unsigned int, QByteArray> getManufacturerData();
-    QMap<QString, QByteArray> getServiceData();
-    bool getIncludeTxPower();
-    bool getDiscoverable();
+    QString getType() const;
+    QStringList getServiceUUIDs() const;
+    QStringList getSolicitUUIDs() const;
+    QMap<unsigned int, QByteArray> getManufacturerData() const;
+    QMap<QString, QByteArray> getServiceData() const;
+    bool getIncludeTxPower() const;
+    bool getDiscoverable() const;
 
     QDBusConnection mBus;
-    QString mPath, mAdType;
-    QStringList mServiceUuids, mSolicitUuids;
+    QString mPath = "/org/asteroidos/btsyncd/advertisement";
+    QString mAdType = "peripheral";
+    QStringList mServiceUuids = {{"00000000-0000-0000-0000-00a57e401d05"}};
+    QStringList mSolicitUuids;
     QMap<unsigned int, QByteArray> mManufacturerData;
     QMap<QString, QByteArray> mServiceData;
-    bool mIncludeTxPower;
-    bool mDiscoverable;
+    bool mIncludeTxPower = false;
+    bool mDiscoverable = true;
 
 public slots:
     void Release();
