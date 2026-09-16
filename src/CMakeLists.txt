@@ -1,14 +1,23 @@
 set(
-    SRC
-    main.cpp
+    SERVICES
     notificationservice.cpp
     weatherservice.cpp
     mediaservice.cpp
     batteryservice.cpp
-    batterystatus.cpp
     screenshotservice.cpp
-    settime.cpp
     timeservice.cpp
+)
+set(
+    REMOTESERVICES
+    remote/ancs.cpp
+    remote/cts.cpp
+)
+set(
+    SRC
+    ${SERVICES}
+    main.cpp
+    batterystatus.cpp
+    settime.cpp
     service.cpp
     characteristic.cpp
     notifyingcharacteristic.cpp
@@ -16,11 +25,10 @@ set(
     application.cpp
     advertisement.cpp
     bluezmanager.cpp
+    ${REMOTESERVICES}
     remote/bluezobjects.cpp
     remote/remotecharacteristic.cpp
-    remote/ancs.cpp
     remote/ancs_notification.cpp
-    remote/cts.cpp
 )
 set(
     HEADERS
