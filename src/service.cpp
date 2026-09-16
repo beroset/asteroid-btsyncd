@@ -27,7 +27,7 @@ Service::Service(QDBusConnection bus, unsigned int index, QString uuid, QObject 
     bus.registerObject(mPath, this, QDBusConnection::ExportAdaptors | QDBusConnection::ExportAllProperties);
 }
 
-QDBusObjectPath Service::getPath()
+QDBusObjectPath Service::getPath() const
 {
     return QDBusObjectPath(mPath);
 }
@@ -37,7 +37,7 @@ void Service::addCharacteristic(Characteristic *charac)
     mCharacteristics.append(charac);
 }
 
-QList<QDBusObjectPath> Service::getCharacteristicPaths()
+QList<QDBusObjectPath> Service::getCharacteristicPaths() const
 {
     QList<QDBusObjectPath> result;
     foreach(Characteristic *carac, mCharacteristics)
@@ -45,17 +45,17 @@ QList<QDBusObjectPath> Service::getCharacteristicPaths()
     return result;
 }
 
-QList<Characteristic *> Service::getCharacteristics()
+QList<Characteristic *> Service::getCharacteristics() const
 {
     return mCharacteristics;
 }
 
-QString Service::getUuid()
+QString Service::getUuid() const
 {
     return mUuid;
 }
 
-bool Service::getPrimary()
+bool Service::getPrimary() const
 {
     return true;
 }

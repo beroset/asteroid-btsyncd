@@ -38,13 +38,13 @@ class Service : public QObject
 
 public:
     explicit Service(QDBusConnection bus, unsigned int index, QString uuid, QObject *parent = nullptr);
-    QDBusObjectPath getPath();
     void addCharacteristic(Characteristic *charac);
-    QList<QDBusObjectPath> getCharacteristicPaths();
-    QList<Characteristic *> getCharacteristics();
 
-    QString getUuid();
-    bool getPrimary();
+    QDBusObjectPath getPath() const;
+    QList<QDBusObjectPath> getCharacteristicPaths() const;
+    QList<Characteristic *> getCharacteristics() const;
+    QString getUuid() const;
+    bool getPrimary() const;
 
 private:
     QDBusConnection mBus;
