@@ -40,15 +40,15 @@ class Characteristic : public QObject
 public:
     explicit Characteristic(QDBusConnection bus, unsigned int index, QString uuid, QStringList flags, Service *service, QObject *parent = nullptr);
 
-    QDBusObjectPath getPath();
+    QDBusObjectPath getPath() const;
 
     void addDescriptor(Descriptor *descriptor);
-    QList<QDBusObjectPath> getDescriptorPaths();
-    QList<Descriptor *> getDescriptors();
+    QList<QDBusObjectPath> getDescriptorPaths() const;
+    QList<Descriptor *> getDescriptors() const;
 
-    QDBusObjectPath getService();
-    QString getUuid();
-    QStringList getFlags();
+    QDBusObjectPath getService() const;
+    QString getUuid() const;
+    QStringList getFlags() const;
 
 protected:
     // Returns false (and logs) when a remote GATT write is shorter than the

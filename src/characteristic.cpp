@@ -31,7 +31,7 @@ Characteristic::Characteristic(QDBusConnection bus, unsigned int index, QString 
     bus.registerObject(mPath, this, QDBusConnection::ExportAllSlots | QDBusConnection::ExportAllProperties);
 }
 
-QDBusObjectPath Characteristic::getPath()
+QDBusObjectPath Characteristic::getPath() const
 {
     return QDBusObjectPath(mPath);
 }
@@ -41,7 +41,7 @@ void Characteristic::addDescriptor(Descriptor *descriptor)
     mDescriptors.append(descriptor);
 }
 
-QList<QDBusObjectPath> Characteristic::getDescriptorPaths()
+QList<QDBusObjectPath> Characteristic::getDescriptorPaths() const
 {
     QList<QDBusObjectPath> result;
     foreach(Descriptor *desc, mDescriptors)
@@ -49,22 +49,22 @@ QList<QDBusObjectPath> Characteristic::getDescriptorPaths()
     return result;
 }
 
-QList<Descriptor *> Characteristic::getDescriptors()
+QList<Descriptor *> Characteristic::getDescriptors() const
 {
     return mDescriptors;
 }
 
-QDBusObjectPath Characteristic::getService()
+QDBusObjectPath Characteristic::getService() const
 {
     return mService->getPath();
 }
 
-QString Characteristic::getUuid()
+QString Characteristic::getUuid() const
 {
     return mUuid;
 }
 
-QStringList Characteristic::getFlags()
+QStringList Characteristic::getFlags() const
 {
     return mFlags;
 }
