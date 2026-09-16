@@ -34,7 +34,7 @@ Application::Application(QDBusConnection bus, QObject *parent) : QObject(parent)
     bus.registerObject(mPath, this, QDBusConnection::ExportAllSlots | QDBusConnection::ExportAllProperties);
 }
 
-QDBusObjectPath Application::getPath()
+QDBusObjectPath Application::getPath() const
 {
     return QDBusObjectPath(mPath);
 }

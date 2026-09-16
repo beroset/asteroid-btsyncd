@@ -38,7 +38,7 @@ class Application : public QObject
 
 public:
     Application(QDBusConnection bus = QDBusConnection::systemBus(), QObject *parent = nullptr);
-    QDBusObjectPath getPath();
+    QDBusObjectPath getPath() const;
     void addService(Service *service);
 
 private:
