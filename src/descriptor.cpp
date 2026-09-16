@@ -28,22 +28,22 @@ Descriptor::Descriptor(QDBusConnection bus, unsigned int index, QStringList flag
     bus.registerObject(mPath, this, QDBusConnection::ExportAllSlots | QDBusConnection::ExportAllProperties);
 }
 
-QDBusObjectPath Descriptor::getCharacteristic()
+QDBusObjectPath Descriptor::getCharacteristic() const
 {
     return mChrc->getPath();
 }
 
-QString Descriptor::getUuid()
+QString Descriptor::getUuid() const
 {
     return mUuid;
 }
 
-QDBusObjectPath Descriptor::getPath()
+QDBusObjectPath Descriptor::getPath() const
 {
     return QDBusObjectPath(mPath);
 }
 
-QStringList Descriptor::getFlags()
+QStringList Descriptor::getFlags() const
 {
     return mFlags;
 }

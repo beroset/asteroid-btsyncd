@@ -38,11 +38,11 @@ class Descriptor : public QObject
 
 public:
     explicit Descriptor(QDBusConnection bus, unsigned int index, QStringList flags, Characteristic *characteristic, QString uuid, QObject *parent);
-    QDBusObjectPath getPath();
+    QDBusObjectPath getPath() const;
 
-    QDBusObjectPath getCharacteristic();
-    QString getUuid();
-    QStringList getFlags();
+    QDBusObjectPath getCharacteristic() const;
+    QString getUuid() const;
+    QStringList getFlags() const;
 
 private:
     QDBusConnection mBus;
