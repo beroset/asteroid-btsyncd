@@ -56,6 +56,22 @@ BlueZManager::BlueZManager(QDBusObjectPath appPath, QDBusObjectPath advertPath, 
         serviceUnregistered(BLUEZ_SERVICE_NAME);
 }
 
+BlueZManager::~BlueZManager()
+{
+    if (mAdapter.isEmpty() || mAdapter == "adapter")
+        return;
+
+    QDBusInterface adManager(BLUEZ_SERVICE_NAME, mAdapter, LE_ADVERTISING_MANAGER_IFACE, mBus);
+    QDBusReply<void> adReply = adManager.call("UnregisterAdvertisement", QVariant::fromValue(mAdvertPath));
+    if (adReply.isError())
+        qWarning() << "UnregisterAdvertisement failed:" << adReply.error().message();
+
+    QDBusInterface serviceManager(BLUEZ_SERVICE_NAME, mAdapter, GATT_MANAGER_IFACE, mBus);
+    QDBusReply<void> appReply = serviceManager.call("UnregisterApplication", QVariant::fromValue(mAppPath));
+    if (appReply.isError())
+        qWarning() << "UnregisterApplication failed:" << appReply.error().message();
+}
+
 void BlueZManager::serviceRegistered(const QString& name)
 {
     qDebug() << "Service" << name << "is running";

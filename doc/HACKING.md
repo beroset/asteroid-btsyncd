@@ -447,3 +447,21 @@ own* adapter, you want a `Service`/`Characteristic` subclass registered
 with `REGISTER_SERVICE`. Either way, adding the feature only requires its
 own `.h`/`.cpp` files plus one line in `src/CMakeLists.txt` — no other
 existing file needs to change.
+
+## Standalone HID keyboard peripheral
+
+`asteroid-hid-keyboard` is a separate foreground daemon that exposes a
+Bluetooth HID keyboard (HOGP) alongside the existing synchronization daemon.
+The `asteroid-hid-keyboard.service` systemd unit starts it and systemd's
+SIGTERM is handled gracefully; the process unregisters its GATT application
+and advertisement from BlueZ when it exits.
+
+Key state is provided over the system D-Bus API
+`org.asteroidos.HidKeyboard1` at `/org/asteroidos/HidKeyboard`. Call
+`SetKeyState(ay)` with exactly eight bytes in standard boot-keyboard report
+order: modifier bits, a zero reserved byte, then six HID keyboard usage IDs
+(zero means no key). Use an all-zero report to release every key.
+`OutputReportChanged(y)` signals the keyboard LED bitmap written by the host.
+The report-mode HID service includes a Report Map, input and output reports,
+Report Reference descriptors, Protocol Mode, HID Control Point, and boot
+keyboard input/output characteristics.

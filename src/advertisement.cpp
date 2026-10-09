@@ -17,10 +17,20 @@
 
 #include "advertisement.h"
 
+#include <utility>
+
 Advertisement::Advertisement(QDBusConnection bus, QObject *parent)
     : QObject{parent}
     , mBus{bus}
 {
+    bus.registerObject(mPath, this, QDBusConnection::ExportAllSlots | QDBusConnection::ExportAllProperties);
+}
+
+Advertisement::Advertisement(QStringList serviceUuids, QDBusConnection bus, QObject *parent)
+    : QObject{parent}
+    , mBus{bus}
+{
+    mServiceUuids = std::move(serviceUuids);
     bus.registerObject(mPath, this, QDBusConnection::ExportAllSlots | QDBusConnection::ExportAllProperties);
 }
 

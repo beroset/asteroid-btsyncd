@@ -39,6 +39,7 @@ class Advertisement : public QObject
 
 public:
     explicit Advertisement(QDBusConnection bus = QDBusConnection::systemBus(), QObject *parent = nullptr);
+    Advertisement(QStringList serviceUuids, QDBusConnection bus, QObject *parent = nullptr);
     QDBusObjectPath getPath();
 
 private:

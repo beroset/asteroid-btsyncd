@@ -1,0 +1,12 @@
+[Unit]
+Description=AsteroidOS Bluetooth HID keyboard peripheral
+After=bluetooth.service
+
+[Service]
+Type=dbus
+BusName=org.asteroidos.HidKeyboard
+ExecStart=@CMAKE_INSTALL_FULL_BINDIR@/asteroid-hid-keyboard
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

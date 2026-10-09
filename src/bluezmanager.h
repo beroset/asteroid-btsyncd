@@ -35,6 +35,7 @@ class BlueZManager : public QObject
     Q_OBJECT
 public:
     explicit BlueZManager(QDBusObjectPath appPath, QDBusObjectPath advertPath, QObject *parent = nullptr);
+    ~BlueZManager() override;
     void updateConnected();
 
 private:
