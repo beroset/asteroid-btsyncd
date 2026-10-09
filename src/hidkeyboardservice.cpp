@@ -97,6 +97,36 @@ private:
     WriteHandler mHandler;
 };
 
+class ProtocolModeCharacteristic final : public Characteristic
+{
+public:
+    ProtocolModeCharacteristic(QDBusConnection bus, unsigned int index, Service *service,
+                               HidKeyboardService *keyboard)
+        : Characteristic(bus, index, HID_PROTOCOL_MODE_UUID,
+                         {"encrypt-authenticated-read", "encrypt-authenticated-write",
+                          "write", "write-without-response"}, service, service)
+        , mKeyboard(keyboard)
+    {
+    }
+
+    QByteArray ReadValue(QVariantMap) override
+    {
+        return QByteArray(1, mKeyboard->bootProtocol() ? 0 : 1);
+    }
+
+    void WriteValue(QByteArray value, QVariantMap) override
+    {
+        if (value.size() != 1 || static_cast<unsigned char>(value.at(0)) > 1) {
+            qWarning() << "Ignoring invalid HID Protocol Mode";
+            return;
+        }
+        mKeyboard->setBootProtocol(value.at(0) == 0);
+    }
+
+private:
+    HidKeyboardService *mKeyboard;
+};
+
 } // namespace
 
 class HidKeyboardService::InputReport final : public NotifyingCharacteristic
@@ -144,16 +174,7 @@ HidKeyboardService::HidKeyboardService(int index, QDBusConnection bus, QObject *
             setSuspended(value.at(0) == 0);
         }));
 
-    addCharacteristic(new WritableCharacteristic(
-        bus, 3, HID_PROTOCOL_MODE_UUID,
-        {"encrypt-authenticated-read", "encrypt-authenticated-write", "write", "write-without-response"},
-        this, [this](const QByteArray &value) {
-            if (value.size() != 1 || static_cast<unsigned char>(value.at(0)) > 1) {
-                qWarning() << "Ignoring invalid HID Protocol Mode";
-                return;
-            }
-            setBootProtocol(value.at(0) == 0);
-        }));
+    addCharacteristic(new ProtocolModeCharacteristic(bus, 3, this, this));
 
     mReportInput = new InputReport(bus, 4, HID_REPORT_UUID, this, true);
     addCharacteristic(mReportInput);
@@ -161,7 +182,7 @@ HidKeyboardService::HidKeyboardService(int index, QDBusConnection bus, QObject *
 
     auto *reportOutput = new WritableCharacteristic(
         bus, 5, HID_REPORT_UUID,
-        {"encrypt-authenticated-read", "encrypt-authenticated-write", "write", "write-without-response"},
+        {"encrypt-authenticated-write", "write", "write-without-response"},
         this, [this](const QByteArray &value) {
             if (value.size() != 2 || static_cast<unsigned char>(value.at(0)) != 2
                 || (static_cast<unsigned char>(value.at(1)) & 0xe0) != 0) {
@@ -238,6 +259,6 @@ void HidKeyboardService::setBootProtocol(bool bootProtocol)
 
 void HidKeyboardService::updateInputReports()
 {
-    mReportInput->publish(mKeyState, mSuspended);
-    mBootInput->publish(mKeyState, mSuspended);
+    mReportInput->publish(mKeyState, mSuspended || mBootProtocol);
+    mBootInput->publish(mKeyState, mSuspended || !mBootProtocol);
 }

@@ -17,6 +17,7 @@
 
 #include <csignal>
 #include <cstdio>
+#include <memory>
 
 #include <QCoreApplication>
 #include <QDBusConnection>
@@ -42,6 +43,9 @@ void handleTerminationSignal(int)
 int main(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
+    std::signal(SIGTERM, handleTerminationSignal);
+    std::signal(SIGINT, handleTerminationSignal);
+
     QDBusConnection bus = QDBusConnection::systemBus();
     if (!bus.isConnected()) {
         fprintf(stderr, "Cannot connect to the D-Bus system bus.\n");
@@ -66,10 +70,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    BlueZManager bluez(gattApplication.getPath(), advertisement.getPath());
-
-    std::signal(SIGTERM, handleTerminationSignal);
-    std::signal(SIGINT, handleTerminationSignal);
+    auto bluez = std::make_unique<BlueZManager>(gattApplication.getPath(), advertisement.getPath());
     QTimer shutdownPoll;
     QObject::connect(&shutdownPoll, &QTimer::timeout, &app, [&app] {
         if (shutdownRequested)
@@ -78,6 +79,7 @@ int main(int argc, char **argv)
     shutdownPoll.start(100);
 
     const int result = app.exec();
+    bluez.reset();
     bus.unregisterObject("/org/asteroidos/HidKeyboard");
     bus.unregisterService(keyboardBusName);
     return result;

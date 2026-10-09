@@ -52,8 +52,8 @@ private:
     Characteristic *mChrc;
 
 public slots:
-    QByteArray ReadValue(QVariantMap options);
-    void WriteValue(QByteArray value, QVariantMap options);
+    virtual QByteArray ReadValue(QVariantMap options);
+    virtual void WriteValue(QByteArray value, QVariantMap options);
 };
 
 #endif // DESCRIPTOR_H

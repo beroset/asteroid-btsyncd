@@ -134,3 +134,7 @@ install(
     FILES ${CMAKE_CURRENT_BINARY_DIR}/asteroid-hid-keyboard.service
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/systemd/system
 )
+install(
+    FILES org.asteroidos.HidKeyboard.conf
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/dbus-1/system.d
+)
