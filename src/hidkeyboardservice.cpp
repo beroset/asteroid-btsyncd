@@ -17,6 +17,9 @@
 
 #include "hidkeyboardservice.h"
 
+#include <functional>
+#include <utility>
+
 #include <QDebug>
 
 #include "characteristic.h"

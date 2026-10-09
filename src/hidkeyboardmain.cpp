@@ -52,13 +52,6 @@ int main(int argc, char **argv)
         return 3;
     }
 
-    constexpr auto keyboardBusName = "org.asteroidos.HidKeyboard";
-    if (!bus.registerService(keyboardBusName)) {
-        qCritical() << "Cannot own D-Bus service" << keyboardBusName
-                    << ":" << bus.lastError().message();
-        return 1;
-    }
-
     HidKeyboardApplication gattApplication(bus);
     Advertisement advertisement(
         {"00001812-0000-1000-8000-00805f9b34fb"}, bus);
@@ -66,7 +59,13 @@ int main(int argc, char **argv)
     if (!bus.registerObject("/org/asteroidos/HidKeyboard", &keyboardInput,
                             QDBusConnection::ExportAllSlots | QDBusConnection::ExportAllSignals)) {
         qCritical() << "Cannot export keyboard D-Bus API:" << bus.lastError().message();
-        bus.unregisterService(keyboardBusName);
+        return 1;
+    }
+
+    constexpr auto keyboardBusName = "org.asteroidos.HidKeyboard";
+    if (!bus.registerService(keyboardBusName)) {
+        qCritical() << "Cannot own D-Bus service" << keyboardBusName
+                    << ":" << bus.lastError().message();
         return 1;
     }
 

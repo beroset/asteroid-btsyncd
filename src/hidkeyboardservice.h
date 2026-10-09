@@ -20,6 +20,8 @@
 
 #include "service.h"
 
+#include <QByteArray>
+
 class HidKeyboardService : public Service
 {
     Q_OBJECT

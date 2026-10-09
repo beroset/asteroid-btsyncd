@@ -22,6 +22,7 @@
 #include <QDBusAbstractAdaptor>
 #include <QDBusObjectPath>
 #include <QDBusConnection>
+#include <QStringList>
 
 #define LE_ADVERTISEMENT_IFACE "org.bluez.LEAdvertisement1"
 
