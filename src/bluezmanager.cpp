@@ -32,9 +32,10 @@
 inline constexpr const char *LE_ADVERTISING_MANAGER_IFACE = "org.bluez.LEAdvertisingManager1";
 inline constexpr const char *GATT_MANAGER_IFACE = "org.bluez.GattManager1";
 inline constexpr const char *DEVICE_MANAGER_IFACE = "org.bluez.Device1";
+inline constexpr const char *NO_ADAPTER = "adapter";
 
 BlueZManager::BlueZManager(QDBusObjectPath appPath, QDBusObjectPath advertPath, QObject *parent)
-    : QObject(parent), mAppPath(appPath), mAdvertPath(advertPath), mAdapter("adapter"), mBus(QDBusConnection::systemBus())
+    : QObject(parent), mAppPath(appPath), mAdvertPath(advertPath), mAdapter(NO_ADAPTER), mBus(QDBusConnection::systemBus())
 {
     mConnected = false;
     mServicesResolved = false;
@@ -60,7 +61,7 @@ BlueZManager::BlueZManager(QDBusObjectPath appPath, QDBusObjectPath advertPath, 
 
 void BlueZManager::unregisterAdvertisement()
 {
-    if (mAdapter.isEmpty() || mAdapter == "adapter")
+    if (!hasAdapter())
         return;
 
     QDBusInterface adManager(BLUEZ_SERVICE_NAME, mAdapter, LE_ADVERTISING_MANAGER_IFACE, mBus);
@@ -71,7 +72,7 @@ void BlueZManager::unregisterAdvertisement()
 
 void BlueZManager::unregisterApplication()
 {
-    if (mAdapter.isEmpty() || mAdapter == "adapter")
+    if (!hasAdapter())
         return;
 
     QDBusInterface serviceManager(BLUEZ_SERVICE_NAME, mAdapter, GATT_MANAGER_IFACE, mBus);
@@ -93,7 +94,7 @@ void BlueZManager::serviceRegistered(const QString& name)
 void BlueZManager::serviceUnregistered(const QString& name)
 {
     qDebug() << "Service" << name << "is not running";
-    setAdapter("adapter");
+    setAdapter(NO_ADAPTER);
     mConnectedDevice = "";
     setConnected(false);
 }
@@ -134,9 +135,14 @@ void BlueZManager::updateAdapter() {
         }
     });
 
-    setAdapter(adapter);
+    setAdapter(adapter.isEmpty() ? NO_ADAPTER : adapter);
     setConnected(connected);
     setServicesResolved(servicesResolved);
+}
+
+bool BlueZManager::hasAdapter() const
+{
+    return !mAdapter.isEmpty() && mAdapter != NO_ADAPTER;
 }
 
 void BlueZManager::setAdapter(QString adapter)
@@ -165,7 +171,7 @@ void BlueZManager::setServicesResolved(bool servicesResolved)
 
 void BlueZManager::onAdapterChanged()
 {
-    if(mAdapter != "")
+    if (hasAdapter())
     {
         qDebug() << "BLE Adapter" << mAdapter << "found";
 

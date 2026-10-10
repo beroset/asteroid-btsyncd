@@ -46,6 +46,7 @@ private:
     std::vector<std::unique_ptr<RemoteFeature>> mRemoteFeatures;
 
     void updateAdapter();
+    bool hasAdapter() const;
     void setAdapter(QString adatper);
     void setConnected(bool connected);
     void setServicesResolved(bool servicesResolved);

@@ -17,13 +17,15 @@
 
 #include <csignal>
 #include <cstdio>
+#include <fcntl.h>
 #include <memory>
+#include <unistd.h>
 
 #include <QCoreApplication>
 #include <QDBusError>
 #include <QDBusConnection>
 #include <QDebug>
-#include <QTimer>
+#include <QSocketNotifier>
 
 #include "advertisement.h"
 #include "bluezmanager.h"
@@ -32,11 +34,12 @@
 
 namespace {
 
-volatile std::sig_atomic_t shutdownRequested = 0;
+int signalPipeWriteFd = -1;
 
-void handleTerminationSignal(int)
+void handleTerminationSignal(int signal)
 {
-    shutdownRequested = 1;
+    const unsigned char signalByte = static_cast<unsigned char>(signal);
+    (void)::write(signalPipeWriteFd, &signalByte, sizeof(signalByte));
 }
 
 } // namespace
@@ -44,6 +47,24 @@ void handleTerminationSignal(int)
 int main(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
+    int signalPipe[2];
+    if (::pipe(signalPipe) != 0) {
+        perror("Cannot create signal pipe");
+        return 1;
+    }
+    for (int fd : signalPipe) {
+        const int statusFlags = ::fcntl(fd, F_GETFL);
+        const int descriptorFlags = ::fcntl(fd, F_GETFD);
+        if (statusFlags == -1 || descriptorFlags == -1
+            || ::fcntl(fd, F_SETFL, statusFlags | O_NONBLOCK) == -1
+            || ::fcntl(fd, F_SETFD, descriptorFlags | FD_CLOEXEC) == -1) {
+            perror("Cannot configure signal pipe");
+            ::close(signalPipe[0]);
+            ::close(signalPipe[1]);
+            return 1;
+        }
+    }
+    signalPipeWriteFd = signalPipe[1];
     std::signal(SIGTERM, handleTerminationSignal);
     std::signal(SIGINT, handleTerminationSignal);
 
@@ -73,15 +94,16 @@ int main(int argc, char **argv)
     auto bluez = std::make_unique<BlueZManager>(
         gattApplication->getPath(), advertisement->getPath());
     QObject::connect(gattApplication.get(), &QObject::destroyed,
-                     bluez.get(), &BlueZManager::unregisterApplication);
+                     bluez.get(), &BlueZManager::unregisterApplication, Qt::DirectConnection);
     QObject::connect(advertisement.get(), &QObject::destroyed,
-                     bluez.get(), &BlueZManager::unregisterAdvertisement);
-    QTimer shutdownPoll;
-    QObject::connect(&shutdownPoll, &QTimer::timeout, &app, [&app] {
-        if (shutdownRequested)
-            app.quit();
+                     bluez.get(), &BlueZManager::unregisterAdvertisement, Qt::DirectConnection);
+    QSocketNotifier shutdownNotifier(signalPipe[0], QSocketNotifier::Read, &app);
+    QObject::connect(&shutdownNotifier, &QSocketNotifier::activated, &app, [&app, &signalPipe] {
+        unsigned char signalByte;
+        while (::read(signalPipe[0], &signalByte, sizeof(signalByte)) > 0) {
+        }
+        app.quit();
     });
-    shutdownPoll.start(100);
 
     const int result = app.exec();
     bus.unregisterObject("/org/asteroidos/HidKeyboard");
@@ -90,5 +112,9 @@ int main(int argc, char **argv)
     gattApplication.reset();
     bluez.reset();
     bus.unregisterService(keyboardBusName);
+    signalPipeWriteFd = -1;
+    shutdownNotifier.setEnabled(false);
+    ::close(signalPipe[0]);
+    ::close(signalPipe[1]);
     return result;
 }
