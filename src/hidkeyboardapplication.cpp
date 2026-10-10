@@ -19,6 +19,7 @@
 
 #include <QDebug>
 #include <QDBusMetaType>
+#include <QDBusError>
 
 #include "descriptor.h"
 
