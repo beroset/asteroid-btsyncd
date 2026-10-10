@@ -75,6 +75,20 @@ private slots:
         QVERIFY(!KeyboardReports::isValidProtocolMode(QByteArray::fromHex("0100")));
         QVERIFY(!KeyboardReports::isValidProtocolMode(QByteArray::fromHex("02")));
     }
+
+    void inputReportProtocolAndSuspendGating()
+    {
+        QByteArray state(KeyboardReports::KeyStateSize, 0);
+        state[KeyboardReports::KeyUsageOffset] = 0x04;
+        const QByteArray emptyState(KeyboardReports::KeyStateSize, 0);
+
+        QCOMPARE(KeyboardReports::reportModeInputValue(state, false, false), state);
+        QCOMPARE(KeyboardReports::reportModeInputValue(state, false, true), emptyState);
+        QCOMPARE(KeyboardReports::reportModeInputValue(state, true, false), emptyState);
+        QCOMPARE(KeyboardReports::bootModeInputValue(state, false, true), state);
+        QCOMPARE(KeyboardReports::bootModeInputValue(state, false, false), emptyState);
+        QCOMPARE(KeyboardReports::bootModeInputValue(state, true, true), emptyState);
+    }
 };
 
 QTEST_APPLESS_MAIN(KeyboardReportsTest)

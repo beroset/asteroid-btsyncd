@@ -47,6 +47,13 @@ void handleTerminationSignal(int signal)
     errno = savedErrno;
 }
 
+void disableTerminationSignals()
+{
+    signalPipeWriteFd = -1;
+    std::signal(SIGTERM, SIG_IGN);
+    std::signal(SIGINT, SIG_IGN);
+}
+
 class SignalPipe
 {
 public:
@@ -108,18 +115,22 @@ int main(int argc, char **argv)
     QDBusConnection bus = QDBusConnection::systemBus();
     if (!bus.isConnected()) {
         fprintf(stderr, "Cannot connect to the D-Bus system bus.\n");
+        disableTerminationSignals();
         return 3;
     }
 
     auto gattApplication = std::make_unique<HidKeyboardApplication>(bus);
-    if (!gattApplication->isRegistered())
+    if (!gattApplication->isRegistered()) {
+        disableTerminationSignals();
         return 1;
+    }
     auto advertisement = std::make_unique<Advertisement>(
         QStringList{HID_KEYBOARD_SERVICE_UUID}, bus);
     auto keyboardInput = std::make_unique<KeyboardInput>(gattApplication->keyboardService());
     if (!bus.registerObject("/org/asteroidos/HidKeyboard", keyboardInput.get(),
                             QDBusConnection::ExportAllSlots | QDBusConnection::ExportAllSignals)) {
         qCritical() << "Cannot export keyboard D-Bus API:" << bus.lastError().message();
+        disableTerminationSignals();
         return 1;
     }
 
@@ -127,6 +138,7 @@ int main(int argc, char **argv)
     if (!bus.registerService(keyboardBusName)) {
         qCritical() << "Cannot own D-Bus service" << keyboardBusName
                     << ":" << bus.lastError().message();
+        disableTerminationSignals();
         return 1;
     }
 
@@ -146,6 +158,8 @@ int main(int argc, char **argv)
                      });
 
     const int result = app.exec();
+    shutdownNotifier.setEnabled(false);
+    disableTerminationSignals();
     bluez->unregisterAdvertisement();
     bluez->unregisterApplication();
     bus.unregisterObject("/org/asteroidos/HidKeyboard");
@@ -154,6 +168,5 @@ int main(int argc, char **argv)
     gattApplication.reset();
     bluez.reset();
     bus.unregisterService(keyboardBusName);
-    shutdownNotifier.setEnabled(false);
     return result;
 }

@@ -157,9 +157,9 @@ public:
     {
     }
 
-    void publish(const QByteArray &state, bool suspended)
+    void publish(const QByteArray &value)
     {
-        setValue(suspended ? QByteArray(KeyboardReports::KeyStateSize, 0) : state);
+        setValue(value);
     }
 };
 
@@ -263,6 +263,8 @@ void HidKeyboardService::setBootProtocol(bool bootProtocol)
 
 void HidKeyboardService::updateInputReports()
 {
-    mReportInput->publish(mKeyState, mSuspended || mBootProtocol);
-    mBootInput->publish(mKeyState, mSuspended || !mBootProtocol);
+    mReportInput->publish(
+        KeyboardReports::reportModeInputValue(mKeyState, mSuspended, mBootProtocol));
+    mBootInput->publish(
+        KeyboardReports::bootModeInputValue(mKeyState, mSuspended, mBootProtocol));
 }

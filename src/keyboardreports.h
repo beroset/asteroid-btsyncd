@@ -54,6 +54,16 @@ inline bool isValidProtocolMode(const QByteArray &value)
         && static_cast<unsigned char>(value.at(0)) <= ReportProtocolMode;
 }
 
+inline QByteArray reportModeInputValue(const QByteArray &state, bool suspended, bool bootProtocol)
+{
+    return suspended || bootProtocol ? QByteArray(KeyStateSize, 0) : state;
+}
+
+inline QByteArray bootModeInputValue(const QByteArray &state, bool suspended, bool bootProtocol)
+{
+    return suspended || !bootProtocol ? QByteArray(KeyStateSize, 0) : state;
+}
+
 inline bool isValidKeyState(const QByteArray &state)
 {
     if (state.size() != KeyStateSize || state.at(ReservedByteOffset) != 0)

@@ -34,6 +34,7 @@ inline constexpr const char *LE_ADVERTISING_MANAGER_IFACE = "org.bluez.LEAdverti
 inline constexpr const char *GATT_MANAGER_IFACE = "org.bluez.GattManager1";
 inline constexpr const char *DEVICE_MANAGER_IFACE = "org.bluez.Device1";
 inline constexpr const char *NO_ADAPTER = "adapter";
+inline constexpr int UNREGISTER_TIMEOUT_MS = 1000;
 
 BlueZManager::BlueZManager(QDBusObjectPath appPath, QDBusObjectPath advertPath, QObject *parent)
     : QObject(parent), mAppPath(appPath), mAdvertPath(advertPath), mAdapter(NO_ADAPTER), mBus(QDBusConnection::systemBus())
@@ -71,7 +72,7 @@ void BlueZManager::unregisterAdvertisement()
     QDBusMessage message = QDBusMessage::createMethodCall(
         BLUEZ_SERVICE_NAME, mAdapter, LE_ADVERTISING_MANAGER_IFACE, "UnregisterAdvertisement");
     message.setArguments({QVariant::fromValue(mAdvertPath)});
-    QDBusReply<void> adReply(mBus.call(message, QDBus::Block, 1000));
+    QDBusReply<void> adReply(mBus.call(message, QDBus::Block, UNREGISTER_TIMEOUT_MS));
     if (!adReply.isValid())
         qWarning() << "UnregisterAdvertisement failed:" << adReply.error().message();
 }
@@ -87,7 +88,7 @@ void BlueZManager::unregisterApplication()
     QDBusMessage message = QDBusMessage::createMethodCall(
         BLUEZ_SERVICE_NAME, mAdapter, GATT_MANAGER_IFACE, "UnregisterApplication");
     message.setArguments({QVariant::fromValue(mAppPath)});
-    QDBusReply<void> appReply(mBus.call(message, QDBus::Block, 1000));
+    QDBusReply<void> appReply(mBus.call(message, QDBus::Block, UNREGISTER_TIMEOUT_MS));
     if (!appReply.isValid())
         qWarning() << "UnregisterApplication failed:" << appReply.error().message();
 }
