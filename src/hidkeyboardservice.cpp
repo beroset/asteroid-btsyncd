@@ -54,6 +54,14 @@ const unsigned char HID_REPORT_MAP_BYTES[] = {
 };
 const QByteArray HID_REPORT_MAP(reinterpret_cast<const char *>(HID_REPORT_MAP_BYTES),
                                 sizeof(HID_REPORT_MAP_BYTES));
+const unsigned char HID_INFORMATION_BYTES[] = {
+    static_cast<unsigned char>(KeyboardReports::HidVersion & 0xff),
+    static_cast<unsigned char>(KeyboardReports::HidVersion >> 8),
+    KeyboardReports::HidCountryCode,
+    KeyboardReports::HidFlags
+};
+const QByteArray HID_INFORMATION(reinterpret_cast<const char *>(HID_INFORMATION_BYTES),
+                                 sizeof(HID_INFORMATION_BYTES));
 
 class ValueCharacteristic final : public Characteristic
 {
@@ -167,7 +175,7 @@ HidKeyboardService::HidKeyboardService(int index, QDBusConnection bus, QObject *
     : Service(bus, index, HID_KEYBOARD_SERVICE_UUID, parent)
 {
     auto *info = new ValueCharacteristic(bus, 0, HID_INFO_UUID, {"encrypt-authenticated-read"},
-                                         this, QByteArray::fromHex("11010002"));
+                                         this, HID_INFORMATION);
     addCharacteristic(info);
 
     addCharacteristic(new ValueCharacteristic(bus, 1, HID_REPORT_MAP_UUID,

@@ -16,8 +16,12 @@
  */
 
 #include "keyboardreports.h"
+#include "hidkeyboardservice.h"
+#include "notifyingcharacteristic.h"
 
 #include <QtTest/QtTest>
+#include <QDBusConnection>
+#include <QSignalSpy>
 
 class KeyboardReportsTest : public QObject
 {
@@ -36,6 +40,11 @@ private slots:
         state[KeyboardReports::ReservedByteOffset] = 1;
         QVERIFY(!KeyboardReports::isValidKeyState(state));
         state[KeyboardReports::ReservedByteOffset] = 0;
+        for (unsigned char invalidUsage = KeyboardReports::ErrorRollOverUsage;
+             invalidUsage <= KeyboardReports::ErrorUndefinedUsage; ++invalidUsage) {
+            state[KeyboardReports::KeyUsageOffset] = static_cast<char>(invalidUsage);
+            QVERIFY(!KeyboardReports::isValidKeyState(state));
+        }
         state[KeyboardReports::KeyUsageOffset] =
             static_cast<char>(KeyboardReports::MaxKeyUsage + 1);
         QVERIFY(!KeyboardReports::isValidKeyState(state));
@@ -89,8 +98,48 @@ private slots:
         QCOMPARE(KeyboardReports::bootModeInputValue(state, false, false), emptyState);
         QCOMPARE(KeyboardReports::bootModeInputValue(state, true, true), emptyState);
     }
+
+    void serviceWriteHandlersAndInputValues()
+    {
+        HidKeyboardService service(0, QDBusConnection(QStringLiteral("keyboardreports-test")));
+        const QList<Characteristic *> characteristics = service.getCharacteristics();
+        QCOMPARE(characteristics.size(), 8);
+        auto *reportInput = qobject_cast<NotifyingCharacteristic *>(characteristics.at(4));
+        auto *reportOutput = characteristics.at(5);
+        auto *protocolMode = characteristics.at(3);
+        auto *controlPoint = characteristics.at(2);
+        QVERIFY(reportInput);
+
+        qRegisterMetaType<quint8>();
+        QSignalSpy outputSpy(&service, &HidKeyboardService::outputReportChanged);
+        QVERIFY(outputSpy.isValid());
+        reportOutput->WriteValue(QByteArray::fromHex("05"), QVariantMap{});
+        QCOMPARE(outputSpy.count(), 1);
+        QCOMPARE(outputSpy.takeFirst().at(0).toUInt(), 5U);
+        reportOutput->WriteValue(QByteArray::fromHex("e0"), QVariantMap{});
+        QCOMPARE(outputSpy.count(), 0);
+
+        QByteArray state(KeyboardReports::KeyStateSize, 0);
+        state[KeyboardReports::KeyUsageOffset] = 0x04;
+        QVERIFY(service.setKeyState(state));
+        QCOMPARE(reportInput->getValue(), state);
+
+        protocolMode->WriteValue(
+            QByteArray(1, KeyboardReports::BootProtocolMode), QVariantMap{});
+        QCOMPARE(protocolMode->ReadValue(QVariantMap{}),
+                 QByteArray(1, KeyboardReports::BootProtocolMode));
+        QCOMPARE(reportInput->getValue(), QByteArray(KeyboardReports::KeyStateSize, 0));
+
+        controlPoint->WriteValue(
+            QByteArray(1, KeyboardReports::SuspendControlPointValue), QVariantMap{});
+        QCOMPARE(characteristics.at(6)->ReadValue(QVariantMap{}),
+                 QByteArray(KeyboardReports::KeyStateSize, 0));
+        controlPoint->WriteValue(
+            QByteArray(1, KeyboardReports::ExitSuspendControlPointValue), QVariantMap{});
+        QCOMPARE(characteristics.at(6)->ReadValue(QVariantMap{}), state);
+    }
 };
 
-QTEST_APPLESS_MAIN(KeyboardReportsTest)
+QTEST_GUILESS_MAIN(KeyboardReportsTest)
 
 #include "keyboardreports_test.moc"

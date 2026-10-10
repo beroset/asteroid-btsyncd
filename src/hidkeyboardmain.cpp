@@ -36,6 +36,8 @@
 namespace {
 
 volatile std::sig_atomic_t signalPipeWriteFd = -1;
+static_assert(sizeof(std::sig_atomic_t) >= sizeof(int),
+              "Signal pipe file descriptor must fit in sig_atomic_t");
 
 void handleTerminationSignal(int signal)
 {
@@ -138,6 +140,7 @@ int main(int argc, char **argv)
     if (!bus.registerService(keyboardBusName)) {
         qCritical() << "Cannot own D-Bus service" << keyboardBusName
                     << ":" << bus.lastError().message();
+        bus.unregisterObject("/org/asteroidos/HidKeyboard");
         disableTerminationSignals();
         return 1;
     }

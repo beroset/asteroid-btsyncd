@@ -34,6 +34,8 @@ inline constexpr const char *LE_ADVERTISING_MANAGER_IFACE = "org.bluez.LEAdverti
 inline constexpr const char *GATT_MANAGER_IFACE = "org.bluez.GattManager1";
 inline constexpr const char *DEVICE_MANAGER_IFACE = "org.bluez.Device1";
 inline constexpr const char *NO_ADAPTER = "adapter";
+// Both blocking calls must complete before the local GATT objects are removed.
+// The bounded calls together add at most two seconds to systemd's stop time.
 inline constexpr int UNREGISTER_TIMEOUT_MS = 1000;
 
 BlueZManager::BlueZManager(QDBusObjectPath appPath, QDBusObjectPath advertPath, QObject *parent)

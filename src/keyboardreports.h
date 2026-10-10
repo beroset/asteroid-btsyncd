@@ -27,7 +27,11 @@ inline constexpr int KeyUsageOffset = 2;
 inline constexpr int KeyCount = 6;
 inline constexpr int KeyStateSize = 1 + 1 + KeyCount;
 inline constexpr int ModifierCount = 8;
+inline constexpr unsigned char MinimumKeyUsage = 0x04;
 inline constexpr unsigned char MaxKeyUsage = 0x65;
+inline constexpr unsigned char ErrorRollOverUsage = 0x01;
+inline constexpr unsigned char PostFailUsage = 0x02;
+inline constexpr unsigned char ErrorUndefinedUsage = 0x03;
 inline constexpr unsigned char InputReportId = 1;
 inline constexpr unsigned char OutputReportId = 2;
 inline constexpr unsigned int LedCount = 5;
@@ -41,6 +45,9 @@ inline constexpr unsigned char SuspendControlPointValue = 0;
 inline constexpr unsigned char ExitSuspendControlPointValue = 1;
 inline constexpr unsigned char BootProtocolMode = 0;
 inline constexpr unsigned char ReportProtocolMode = 1;
+inline constexpr unsigned short HidVersion = 0x0111;
+inline constexpr unsigned char HidCountryCode = 0;
+inline constexpr unsigned char HidFlags = 0x02;
 
 inline bool isValidControlPoint(const QByteArray &value)
 {
@@ -70,7 +77,10 @@ inline bool isValidKeyState(const QByteArray &state)
         return false;
 
     for (int i = KeyUsageOffset; i < state.size(); ++i) {
-        if (static_cast<unsigned char>(state.at(i)) > MaxKeyUsage)
+        const unsigned char usage = static_cast<unsigned char>(state.at(i));
+        if (usage != 0 && usage < MinimumKeyUsage)
+            return false;
+        if (usage > MaxKeyUsage)
             return false;
     }
     return true;
