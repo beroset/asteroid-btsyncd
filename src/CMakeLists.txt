@@ -59,7 +59,7 @@ set(
     remote/ancs_notification.h
     remote/cts.h
 )
-
+if (NOT DESKTOP)
 add_executable(asteroid-btsyncd ${SRC} ${HEADERS})
 target_include_directories(asteroid-btsyncd PRIVATE remote)
 target_compile_features(asteroid-btsyncd PRIVATE cxx_std_23)
@@ -83,6 +83,7 @@ install(
     DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
+endif()
 set(
     HID_KEYBOARD_SRC
     hidkeyboardmain.cpp

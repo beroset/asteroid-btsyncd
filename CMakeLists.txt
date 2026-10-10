@@ -7,8 +7,23 @@ project(
     LANGUAGES CXX
 )
 
+option(DESKTOP "Create desktop extract" ON)
 option(WITH_DOC "Create project documentation" OFF)
 
+if (DESKTOP)
+find_package(ECM REQUIRED NO_MODULE)
+set(CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
+include(FeatureSummary)
+include(GNUInstallDirs)
+include(ECMFindQmlModule)
+find_package(PkgConfig REQUIRED)
+find_package(Qt6 REQUIRED COMPONENTS Core DBus)
+add_subdirectory(src)
+if (WITH_DOC)
+    add_subdirectory(doc)
+endif()
+
+else()
 find_package(ECM REQUIRED NO_MODULE)
 find_package(AsteroidApp6 REQUIRED)
 
@@ -33,5 +48,6 @@ if (WITH_DOC)
 endif()
 
 build_translations(i18n)
+endif()
 
 feature_summary(WHAT ALL FATAL_ON_MISSING_REQUIRED_PACKAGES)
