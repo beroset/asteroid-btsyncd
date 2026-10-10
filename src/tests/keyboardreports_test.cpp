@@ -17,35 +17,46 @@
 
 #include "keyboardreports.h"
 
-int main()
+#include <QtTest/QtTest>
+
+class KeyboardReportsTest : public QObject
 {
-    if (!KeyboardReports::isValidKeyState(QByteArray(8, 0))
-        || KeyboardReports::isValidKeyState(QByteArray(7, 0))
-        || KeyboardReports::isValidKeyState(QByteArray(9, 0)))
-        return 1;
+    Q_OBJECT
 
-    QByteArray state(8, 0);
-    state[2] = 0x04;
-    if (!KeyboardReports::isValidKeyState(state))
-        return 2;
-    state[1] = 1;
-    if (KeyboardReports::isValidKeyState(state))
-        return 3;
-    state[1] = 0;
-    state[2] = static_cast<char>(0x66);
-    if (KeyboardReports::isValidKeyState(state))
-        return 4;
+private slots:
+    void keyStateValidation()
+    {
+        QVERIFY(KeyboardReports::isValidKeyState(QByteArray(KeyboardReports::KeyStateSize, 0)));
+        QVERIFY(!KeyboardReports::isValidKeyState(QByteArray(KeyboardReports::KeyStateSize - 1, 0)));
+        QVERIFY(!KeyboardReports::isValidKeyState(QByteArray(KeyboardReports::KeyStateSize + 1, 0)));
 
-    if (!KeyboardReports::isValidReportOutput(QByteArray::fromHex("021f"))
-        || KeyboardReports::isValidReportOutput(QByteArray::fromHex("021f00"))
-        || KeyboardReports::isValidReportOutput(QByteArray::fromHex("011f"))
-        || KeyboardReports::isValidReportOutput(QByteArray::fromHex("02e0")))
-        return 5;
+        QByteArray state(KeyboardReports::KeyStateSize, 0);
+        state[KeyboardReports::KeyUsageOffset] = 0x04;
+        QVERIFY(KeyboardReports::isValidKeyState(state));
+        state[KeyboardReports::ReservedByteOffset] = 1;
+        QVERIFY(!KeyboardReports::isValidKeyState(state));
+        state[KeyboardReports::ReservedByteOffset] = 0;
+        state[KeyboardReports::KeyUsageOffset] =
+            static_cast<char>(KeyboardReports::MaxKeyUsage + 1);
+        QVERIFY(!KeyboardReports::isValidKeyState(state));
+    }
 
-    if (!KeyboardReports::isValidBootOutput(QByteArray::fromHex("1f"))
-        || KeyboardReports::isValidBootOutput(QByteArray::fromHex("1f00"))
-        || KeyboardReports::isValidBootOutput(QByteArray::fromHex("e0")))
-        return 6;
+    void outputReportValidation()
+    {
+        QVERIFY(KeyboardReports::isValidReportOutput(QByteArray::fromHex("1f")));
+        QVERIFY(!KeyboardReports::isValidReportOutput(QByteArray()));
+        QVERIFY(!KeyboardReports::isValidReportOutput(QByteArray::fromHex("1f00")));
+        QVERIFY(!KeyboardReports::isValidReportOutput(QByteArray::fromHex("e0")));
+    }
 
-    return 0;
-}
+    void bootOutputValidation()
+    {
+        QVERIFY(KeyboardReports::isValidBootOutput(QByteArray::fromHex("1f")));
+        QVERIFY(!KeyboardReports::isValidBootOutput(QByteArray::fromHex("1f00")));
+        QVERIFY(!KeyboardReports::isValidBootOutput(QByteArray::fromHex("e0")));
+    }
+};
+
+QTEST_APPLESS_MAIN(KeyboardReportsTest)
+
+#include "keyboardreports_test.moc"

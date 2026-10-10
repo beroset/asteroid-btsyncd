@@ -19,6 +19,7 @@
 #define HIDKEYBOARDSERVICE_H
 
 #include "service.h"
+#include "keyboardreports.h"
 
 #include <QByteArray>
 
@@ -41,7 +42,7 @@ signals:
 
 private:
     class InputReport;
-    QByteArray mKeyState = QByteArray(8, 0);
+    QByteArray mKeyState = QByteArray(KeyboardReports::KeyStateSize, 0);
     bool mBootProtocol = false;
     bool mSuspended = false;
     InputReport *mReportInput = nullptr;

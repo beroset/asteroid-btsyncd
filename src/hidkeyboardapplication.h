@@ -33,6 +33,7 @@ public:
 
     QDBusObjectPath getPath() const;
     HidKeyboardService *keyboardService() const;
+    bool isRegistered() const;
 
 public slots:
     ManagedObjectList GetManagedObjects();
@@ -40,6 +41,7 @@ public slots:
 private:
     QString mPath = "/";
     HidKeyboardService *mService;
+    bool mRegistered = false;
 };
 
 #endif // HIDKEYBOARDAPPLICATION_H

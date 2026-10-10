@@ -17,6 +17,7 @@
 
 #include "hidkeyboardapplication.h"
 
+#include <QDebug>
 #include <QDBusMetaType>
 
 #include "descriptor.h"
@@ -26,7 +27,9 @@ HidKeyboardApplication::HidKeyboardApplication(QDBusConnection bus)
 {
     qDBusRegisterMetaType<InterfaceList>();
     qDBusRegisterMetaType<ManagedObjectList>();
-    bus.registerObject(mPath, this, QDBusConnection::ExportAllSlots);
+    mRegistered = bus.registerObject(mPath, this, QDBusConnection::ExportAllSlots);
+    if (!mRegistered)
+        qCritical() << "Cannot register HID GATT application:" << bus.lastError().message();
 }
 
 QDBusObjectPath HidKeyboardApplication::getPath() const
@@ -37,6 +40,11 @@ QDBusObjectPath HidKeyboardApplication::getPath() const
 HidKeyboardService *HidKeyboardApplication::keyboardService() const
 {
     return mService;
+}
+
+bool HidKeyboardApplication::isRegistered() const
+{
+    return mRegistered;
 }
 
 ManagedObjectList HidKeyboardApplication::GetManagedObjects()

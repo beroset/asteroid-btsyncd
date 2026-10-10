@@ -16,6 +16,7 @@
  */
 
 #include <csignal>
+#include <cerrno>
 #include <cstdio>
 #include <fcntl.h>
 #include <memory>
@@ -34,37 +35,73 @@
 
 namespace {
 
-int signalPipeWriteFd = -1;
+volatile std::sig_atomic_t signalPipeWriteFd = -1;
 
 void handleTerminationSignal(int signal)
 {
+    const int savedErrno = errno;
     const unsigned char signalByte = static_cast<unsigned char>(signal);
-    (void)::write(signalPipeWriteFd, &signalByte, sizeof(signalByte));
+    const int fd = signalPipeWriteFd;
+    if (fd >= 0)
+        (void)::write(fd, &signalByte, sizeof(signalByte));
+    errno = savedErrno;
 }
+
+class SignalPipe
+{
+public:
+    bool open()
+    {
+        int fds[2];
+        if (::pipe(fds) != 0)
+            return false;
+
+        for (int fd : fds) {
+            const int statusFlags = ::fcntl(fd, F_GETFL);
+            const int descriptorFlags = ::fcntl(fd, F_GETFD);
+            if (statusFlags == -1 || descriptorFlags == -1
+                || ::fcntl(fd, F_SETFL, statusFlags | O_NONBLOCK) == -1
+                || ::fcntl(fd, F_SETFD, descriptorFlags | FD_CLOEXEC) == -1) {
+                const int savedErrno = errno;
+                ::close(fds[0]);
+                ::close(fds[1]);
+                errno = savedErrno;
+                return false;
+            }
+        }
+        mReadFd = fds[0];
+        mWriteFd = fds[1];
+        return true;
+    }
+
+    ~SignalPipe()
+    {
+        signalPipeWriteFd = -1;
+        if (mReadFd >= 0)
+            ::close(mReadFd);
+        if (mWriteFd >= 0)
+            ::close(mWriteFd);
+    }
+
+    int readFd() const { return mReadFd; }
+    int writeFd() const { return mWriteFd; }
+
+private:
+    int mReadFd = -1;
+    int mWriteFd = -1;
+};
 
 } // namespace
 
 int main(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
-    int signalPipe[2];
-    if (::pipe(signalPipe) != 0) {
-        perror("Cannot create signal pipe");
+    SignalPipe signalPipe;
+    if (!signalPipe.open()) {
+        perror("Cannot create or configure signal pipe");
         return 1;
     }
-    for (int fd : signalPipe) {
-        const int statusFlags = ::fcntl(fd, F_GETFL);
-        const int descriptorFlags = ::fcntl(fd, F_GETFD);
-        if (statusFlags == -1 || descriptorFlags == -1
-            || ::fcntl(fd, F_SETFL, statusFlags | O_NONBLOCK) == -1
-            || ::fcntl(fd, F_SETFD, descriptorFlags | FD_CLOEXEC) == -1) {
-            perror("Cannot configure signal pipe");
-            ::close(signalPipe[0]);
-            ::close(signalPipe[1]);
-            return 1;
-        }
-    }
-    signalPipeWriteFd = signalPipe[1];
+    signalPipeWriteFd = signalPipe.writeFd();
     std::signal(SIGTERM, handleTerminationSignal);
     std::signal(SIGINT, handleTerminationSignal);
 
@@ -75,6 +112,8 @@ int main(int argc, char **argv)
     }
 
     auto gattApplication = std::make_unique<HidKeyboardApplication>(bus);
+    if (!gattApplication->isRegistered())
+        return 1;
     auto advertisement = std::make_unique<Advertisement>(
         QStringList{HID_KEYBOARD_SERVICE_UUID}, bus);
     auto keyboardInput = std::make_unique<KeyboardInput>(gattApplication->keyboardService());
@@ -94,16 +133,17 @@ int main(int argc, char **argv)
     auto bluez = std::make_unique<BlueZManager>(
         gattApplication->getPath(), advertisement->getPath());
     QObject::connect(gattApplication.get(), &QObject::destroyed,
-                     bluez.get(), &BlueZManager::unregisterApplication, Qt::DirectConnection);
+                     bluez.get(), &BlueZManager::applicationDestroyed, Qt::DirectConnection);
     QObject::connect(advertisement.get(), &QObject::destroyed,
-                     bluez.get(), &BlueZManager::unregisterAdvertisement, Qt::DirectConnection);
-    QSocketNotifier shutdownNotifier(signalPipe[0], QSocketNotifier::Read, &app);
-    QObject::connect(&shutdownNotifier, &QSocketNotifier::activated, &app, [&app, &signalPipe] {
-        unsigned char signalByte;
-        while (::read(signalPipe[0], &signalByte, sizeof(signalByte)) > 0) {
-        }
-        app.quit();
-    });
+                     bluez.get(), &BlueZManager::advertisementDestroyed, Qt::DirectConnection);
+    QSocketNotifier shutdownNotifier(signalPipe.readFd(), QSocketNotifier::Read, &app);
+    QObject::connect(&shutdownNotifier, &QSocketNotifier::activated, &app,
+                     [&app, readFd = signalPipe.readFd()] {
+                         unsigned char signalByte;
+                         while (::read(readFd, &signalByte, sizeof(signalByte)) > 0) {
+                         }
+                         app.quit();
+                     });
 
     const int result = app.exec();
     bluez->unregisterAdvertisement();
@@ -114,9 +154,6 @@ int main(int argc, char **argv)
     gattApplication.reset();
     bluez.reset();
     bus.unregisterService(keyboardBusName);
-    signalPipeWriteFd = -1;
     shutdownNotifier.setEnabled(false);
-    ::close(signalPipe[0]);
-    ::close(signalPipe[1]);
     return result;
 }

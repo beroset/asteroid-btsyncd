@@ -38,10 +38,22 @@ inline constexpr char BOOT_KEYBOARD_INPUT_UUID[] = "00002a22-0000-1000-8000-0080
 inline constexpr char BOOT_KEYBOARD_OUTPUT_UUID[] = "00002a32-0000-1000-8000-00805f9b34fb";
 inline constexpr char REPORT_REFERENCE_UUID[] = "00002908-0000-1000-8000-00805f9b34fb";
 
-const QByteArray HID_REPORT_MAP = QByteArray::fromHex(
-    "05010906a1018501050719e029e715002501750195088102"
-    "95017508810195067508150025650507190029658100"
-    "85020508190129059102950175039101c0");
+const unsigned char HID_REPORT_MAP_BYTES[] = {
+    0x05, 0x01, 0x09, 0x06, 0xa1, 0x01,
+    0x85, KeyboardReports::InputReportId,
+    0x05, 0x07, 0x19, 0xe0, 0x29, 0xe7, 0x15, 0x00, 0x25, 0x01,
+    0x75, 0x01, 0x95, KeyboardReports::ModifierCount, 0x81, 0x02,
+    0x95, 0x01, 0x75, 0x08, 0x81, 0x01,
+    0x95, KeyboardReports::KeyCount, 0x75, 0x08, 0x15, 0x00,
+    0x25, KeyboardReports::MaxKeyUsage, 0x05, 0x07, 0x19, 0x00,
+    0x29, KeyboardReports::MaxKeyUsage, 0x81, 0x00,
+    0x85, KeyboardReports::OutputReportId,
+    0x05, 0x08, 0x19, 0x01, 0x29, KeyboardReports::LedCount,
+    0x75, 0x01, 0x95, KeyboardReports::LedCount, 0x91, 0x02,
+    0x95, 0x01, 0x75, KeyboardReports::LedPaddingBits, 0x91, 0x01, 0xc0
+};
+const QByteArray HID_REPORT_MAP(reinterpret_cast<const char *>(HID_REPORT_MAP_BYTES),
+                                sizeof(HID_REPORT_MAP_BYTES));
 
 class ValueCharacteristic final : public Characteristic
 {
@@ -135,25 +147,17 @@ private:
 class HidKeyboardService::InputReport final : public NotifyingCharacteristic
 {
 public:
-    InputReport(QDBusConnection bus, unsigned int index, const QString &uuid, Service *service,
-                bool reportProtocol)
+    InputReport(QDBusConnection bus, unsigned int index, const QString &uuid, Service *service)
         : NotifyingCharacteristic(bus, index, uuid,
                                   {"encrypt-authenticated-read", "encrypt-authenticated-notify"},
-                                  service, QByteArray(8, 0))
-        , mReportProtocol(reportProtocol)
+                                  service, QByteArray(KeyboardReports::KeyStateSize, 0))
     {
     }
 
     void publish(const QByteArray &state, bool suspended)
     {
-        QByteArray value = suspended ? QByteArray(8, 0) : state;
-        if (mReportProtocol)
-            value.prepend(static_cast<char>(1));
-        setValue(value);
+        setValue(suspended ? QByteArray(KeyboardReports::KeyStateSize, 0) : state);
     }
-
-private:
-    bool mReportProtocol;
 };
 
 HidKeyboardService::HidKeyboardService(int index, QDBusConnection bus, QObject *parent)
@@ -179,9 +183,10 @@ HidKeyboardService::HidKeyboardService(int index, QDBusConnection bus, QObject *
 
     addCharacteristic(new ProtocolModeCharacteristic(bus, 3, this, this));
 
-    mReportInput = new InputReport(bus, 4, HID_REPORT_UUID, this, true);
+    mReportInput = new InputReport(bus, 4, HID_REPORT_UUID, this);
     addCharacteristic(mReportInput);
-    mReportInput->addDescriptor(new ReportReference(bus, mReportInput, 1, 1));
+    mReportInput->addDescriptor(new ReportReference(
+        bus, mReportInput, KeyboardReports::InputReportId, KeyboardReports::InputReportType));
 
     auto *reportOutput = new WritableCharacteristic(
         bus, 5, HID_REPORT_UUID,
@@ -191,12 +196,13 @@ HidKeyboardService::HidKeyboardService(int index, QDBusConnection bus, QObject *
                 qWarning() << "Ignoring malformed keyboard output report";
                 return;
             }
-            emit outputReportChanged(static_cast<unsigned char>(value.at(1)));
+            emit outputReportChanged(static_cast<unsigned char>(value.at(0)));
         });
-    reportOutput->addDescriptor(new ReportReference(bus, reportOutput, 2, 2));
+    reportOutput->addDescriptor(new ReportReference(
+        bus, reportOutput, KeyboardReports::OutputReportId, KeyboardReports::OutputReportType));
     addCharacteristic(reportOutput);
 
-    mBootInput = new InputReport(bus, 6, BOOT_KEYBOARD_INPUT_UUID, this, false);
+    mBootInput = new InputReport(bus, 6, BOOT_KEYBOARD_INPUT_UUID, this);
     addCharacteristic(mBootInput);
 
     addCharacteristic(new WritableCharacteristic(

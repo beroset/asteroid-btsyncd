@@ -22,13 +22,29 @@
 
 namespace KeyboardReports {
 
+inline constexpr int ReservedByteOffset = 1;
+inline constexpr int KeyUsageOffset = 2;
+inline constexpr int KeyCount = 6;
+inline constexpr int KeyStateSize = 1 + 1 + KeyCount;
+inline constexpr int ModifierCount = 8;
+inline constexpr unsigned char MaxKeyUsage = 0x65;
+inline constexpr unsigned char InputReportId = 1;
+inline constexpr unsigned char OutputReportId = 2;
+inline constexpr unsigned int LedCount = 5;
+inline constexpr unsigned int LedPaddingBits = 3;
+inline constexpr unsigned char LedReservedMask =
+    ((1U << LedPaddingBits) - 1U) << LedCount;
+inline constexpr int OutputReportSize = 1;
+inline constexpr unsigned char InputReportType = 1;
+inline constexpr unsigned char OutputReportType = 2;
+
 inline bool isValidKeyState(const QByteArray &state)
 {
-    if (state.size() != 8 || state.at(1) != 0)
+    if (state.size() != KeyStateSize || state.at(ReservedByteOffset) != 0)
         return false;
 
-    for (int i = 2; i < state.size(); ++i) {
-        if (static_cast<unsigned char>(state.at(i)) > 0x65)
+    for (int i = KeyUsageOffset; i < state.size(); ++i) {
+        if (static_cast<unsigned char>(state.at(i)) > MaxKeyUsage)
             return false;
     }
     return true;
@@ -36,15 +52,13 @@ inline bool isValidKeyState(const QByteArray &state)
 
 inline bool isValidReportOutput(const QByteArray &value)
 {
-    return value.size() == 2
-        && static_cast<unsigned char>(value.at(0)) == 2
-        && (static_cast<unsigned char>(value.at(1)) & 0xe0) == 0;
+    return value.size() == OutputReportSize
+        && (static_cast<unsigned char>(value.at(0)) & LedReservedMask) == 0;
 }
 
 inline bool isValidBootOutput(const QByteArray &value)
 {
-    return value.size() == 1
-        && (static_cast<unsigned char>(value.at(0)) & 0xe0) == 0;
+    return isValidReportOutput(value);
 }
 
 } // namespace KeyboardReports

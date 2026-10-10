@@ -70,6 +70,8 @@ public slots:
     void onAdapterChanged();
     void unregisterApplication();
     void unregisterAdvertisement();
+    void applicationDestroyed();
+    void advertisementDestroyed();
 };
 
 #endif // BLUEZMANAGER_H

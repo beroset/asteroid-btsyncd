@@ -25,6 +25,7 @@
 #include <QDBusReply>
 #include <QDBusMessage>
 #include <QDebug>
+#include <QMetaObject>
 #include <QTimer>
 
 #include "bluezobjects.h"
@@ -90,6 +91,16 @@ void BlueZManager::unregisterApplication()
     QDBusReply<void> appReply(mBus.call(message, QDBus::Block, 1000));
     if (!appReply.isValid())
         qWarning() << "UnregisterApplication failed:" << appReply.error().message();
+}
+
+void BlueZManager::applicationDestroyed()
+{
+    QMetaObject::invokeMethod(this, "unregisterApplication", Qt::QueuedConnection);
+}
+
+void BlueZManager::advertisementDestroyed()
+{
+    QMetaObject::invokeMethod(this, "unregisterAdvertisement", Qt::QueuedConnection);
 }
 
 void BlueZManager::serviceRegistered(const QString& name)

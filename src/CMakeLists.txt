@@ -141,8 +141,10 @@ install(
 )
 
 if(BUILD_TESTING)
+    find_package(Qt6 REQUIRED COMPONENTS Test)
     add_executable(keyboardreports-test tests/keyboardreports_test.cpp)
     target_include_directories(keyboardreports-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-    target_link_libraries(keyboardreports-test PRIVATE Qt6::Core)
+    target_link_libraries(keyboardreports-test PRIVATE Qt6::Test)
+    set_target_properties(keyboardreports-test PROPERTIES AUTOMOC ON)
     add_test(NAME keyboardreports COMMAND keyboardreports-test)
 endif()
