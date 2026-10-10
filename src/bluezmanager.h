@@ -44,6 +44,8 @@ private:
     QDBusServiceWatcher *mWatcher;
     QDBusConnection mBus;
     std::vector<std::unique_ptr<RemoteFeature>> mRemoteFeatures;
+    bool mAdvertisementUnregistered = false;
+    bool mApplicationUnregistered = false;
 
     void updateAdapter();
     bool hasAdapter() const;

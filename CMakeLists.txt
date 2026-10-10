@@ -16,6 +16,7 @@ set(CMAKE_MODULE_PATH ${ECM_MODULE_PATH} ${ASTEROID_MODULE_PATH})
 
 include(FeatureSummary)
 include(GNUInstallDirs)
+include(CTest)
 include(ECMFindQmlModule)
 include(Asteroid6CMakeSettings)
 include(Asteroid6Translations)

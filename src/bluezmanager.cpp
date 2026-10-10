@@ -23,6 +23,7 @@
 #include <QDBusPendingCallWatcher>
 #include <QDBusPendingReply>
 #include <QDBusReply>
+#include <QDBusMessage>
 #include <QDebug>
 #include <QTimer>
 
@@ -61,22 +62,32 @@ BlueZManager::BlueZManager(QDBusObjectPath appPath, QDBusObjectPath advertPath, 
 
 void BlueZManager::unregisterAdvertisement()
 {
+    if (mAdvertisementUnregistered)
+        return;
+    mAdvertisementUnregistered = true;
     if (!hasAdapter())
         return;
 
-    QDBusInterface adManager(BLUEZ_SERVICE_NAME, mAdapter, LE_ADVERTISING_MANAGER_IFACE, mBus);
-    QDBusReply<void> adReply = adManager.call("UnregisterAdvertisement", QVariant::fromValue(mAdvertPath));
+    QDBusMessage message = QDBusMessage::createMethodCall(
+        BLUEZ_SERVICE_NAME, mAdapter, LE_ADVERTISING_MANAGER_IFACE, "UnregisterAdvertisement");
+    message.setArguments({QVariant::fromValue(mAdvertPath)});
+    QDBusReply<void> adReply(mBus.call(message, QDBus::Block, 1000));
     if (!adReply.isValid())
         qWarning() << "UnregisterAdvertisement failed:" << adReply.error().message();
 }
 
 void BlueZManager::unregisterApplication()
 {
+    if (mApplicationUnregistered)
+        return;
+    mApplicationUnregistered = true;
     if (!hasAdapter())
         return;
 
-    QDBusInterface serviceManager(BLUEZ_SERVICE_NAME, mAdapter, GATT_MANAGER_IFACE, mBus);
-    QDBusReply<void> appReply = serviceManager.call("UnregisterApplication", QVariant::fromValue(mAppPath));
+    QDBusMessage message = QDBusMessage::createMethodCall(
+        BLUEZ_SERVICE_NAME, mAdapter, GATT_MANAGER_IFACE, "UnregisterApplication");
+    message.setArguments({QVariant::fromValue(mAppPath)});
+    QDBusReply<void> appReply(mBus.call(message, QDBus::Block, 1000));
     if (!appReply.isValid())
         qWarning() << "UnregisterApplication failed:" << appReply.error().message();
 }

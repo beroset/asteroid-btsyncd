@@ -76,7 +76,7 @@ int main(int argc, char **argv)
 
     auto gattApplication = std::make_unique<HidKeyboardApplication>(bus);
     auto advertisement = std::make_unique<Advertisement>(
-        QStringList{"00001812-0000-1000-8000-00805f9b34fb"}, bus);
+        QStringList{HID_KEYBOARD_SERVICE_UUID}, bus);
     auto keyboardInput = std::make_unique<KeyboardInput>(gattApplication->keyboardService());
     if (!bus.registerObject("/org/asteroidos/HidKeyboard", keyboardInput.get(),
                             QDBusConnection::ExportAllSlots | QDBusConnection::ExportAllSignals)) {
@@ -106,6 +106,8 @@ int main(int argc, char **argv)
     });
 
     const int result = app.exec();
+    bluez->unregisterAdvertisement();
+    bluez->unregisterApplication();
     bus.unregisterObject("/org/asteroidos/HidKeyboard");
     keyboardInput.reset();
     advertisement.reset();

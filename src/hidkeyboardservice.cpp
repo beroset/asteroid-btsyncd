@@ -25,10 +25,10 @@
 #include "characteristic.h"
 #include "descriptor.h"
 #include "notifyingcharacteristic.h"
+#include "keyboardreports.h"
 
 namespace {
 
-inline constexpr char HID_SERVICE_UUID[] = "00001812-0000-1000-8000-00805f9b34fb";
 inline constexpr char HID_INFO_UUID[] = "00002a4a-0000-1000-8000-00805f9b34fb";
 inline constexpr char HID_REPORT_MAP_UUID[] = "00002a4b-0000-1000-8000-00805f9b34fb";
 inline constexpr char HID_CONTROL_POINT_UUID[] = "00002a4c-0000-1000-8000-00805f9b34fb";
@@ -157,7 +157,7 @@ private:
 };
 
 HidKeyboardService::HidKeyboardService(int index, QDBusConnection bus, QObject *parent)
-    : Service(bus, index, HID_SERVICE_UUID, parent)
+    : Service(bus, index, HID_KEYBOARD_SERVICE_UUID, parent)
 {
     auto *info = new ValueCharacteristic(bus, 0, HID_INFO_UUID, {"encrypt-authenticated-read"},
                                          this, QByteArray::fromHex("11010002"));
@@ -187,8 +187,7 @@ HidKeyboardService::HidKeyboardService(int index, QDBusConnection bus, QObject *
         bus, 5, HID_REPORT_UUID,
         {"encrypt-authenticated-write", "write", "write-without-response"},
         this, [this](const QByteArray &value) {
-            if (value.size() != 2 || static_cast<unsigned char>(value.at(0)) != 2
-                || (static_cast<unsigned char>(value.at(1)) & 0xe0) != 0) {
+            if (!KeyboardReports::isValidReportOutput(value)) {
                 qWarning() << "Ignoring malformed keyboard output report";
                 return;
             }
@@ -204,7 +203,7 @@ HidKeyboardService::HidKeyboardService(int index, QDBusConnection bus, QObject *
         bus, 7, BOOT_KEYBOARD_OUTPUT_UUID,
         {"encrypt-authenticated-write", "write", "write-without-response"}, this,
         [this](const QByteArray &value) {
-            if (value.size() != 1 || (static_cast<unsigned char>(value.at(0)) & 0xe0) != 0) {
+            if (!KeyboardReports::isValidBootOutput(value)) {
                 qWarning() << "Ignoring malformed boot keyboard output report";
                 return;
             }
@@ -216,17 +215,9 @@ HidKeyboardService::HidKeyboardService(int index, QDBusConnection bus, QObject *
 
 bool HidKeyboardService::setKeyState(const QByteArray &state)
 {
-    if (state.size() != 8 || state.at(1) != 0) {
-        qWarning() << "Rejecting keyboard state: expected an 8-byte boot keyboard report";
+    if (!KeyboardReports::isValidKeyState(state)) {
+        qWarning() << "Rejecting invalid keyboard state";
         return false;
-    }
-
-    for (int i = 2; i < state.size(); ++i) {
-        const unsigned char usage = static_cast<unsigned char>(state.at(i));
-        if (usage > 0x65) {
-            qWarning() << "Rejecting keyboard state with invalid key usage" << usage;
-            return false;
-        }
     }
 
     mKeyState = state;

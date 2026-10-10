@@ -101,6 +101,7 @@ set(
     HID_KEYBOARD_HEADERS
     hidkeyboardapplication.h
     hidkeyboardservice.h
+    keyboardreports.h
     keyboardinput.h
     service.h
     characteristic.h
@@ -138,3 +139,10 @@ install(
     FILES org.asteroidos.HidKeyboard.conf
     DESTINATION ${CMAKE_INSTALL_DATADIR}/dbus-1/system.d
 )
+
+if(BUILD_TESTING)
+    add_executable(keyboardreports-test tests/keyboardreports_test.cpp)
+    target_include_directories(keyboardreports-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_link_libraries(keyboardreports-test PRIVATE Qt6::Core)
+    add_test(NAME keyboardreports COMMAND keyboardreports-test)
+endif()
