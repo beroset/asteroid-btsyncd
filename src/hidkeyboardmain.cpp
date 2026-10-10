@@ -20,6 +20,7 @@
 #include <memory>
 
 #include <QCoreApplication>
+#include <QDBusError>
 #include <QDBusConnection>
 #include <QDebug>
 #include <QTimer>
@@ -52,11 +53,11 @@ int main(int argc, char **argv)
         return 3;
     }
 
-    HidKeyboardApplication gattApplication(bus);
-    Advertisement advertisement(
-        {"00001812-0000-1000-8000-00805f9b34fb"}, bus);
-    KeyboardInput keyboardInput(gattApplication.keyboardService());
-    if (!bus.registerObject("/org/asteroidos/HidKeyboard", &keyboardInput,
+    auto gattApplication = std::make_unique<HidKeyboardApplication>(bus);
+    auto advertisement = std::make_unique<Advertisement>(
+        QStringList{"00001812-0000-1000-8000-00805f9b34fb"}, bus);
+    auto keyboardInput = std::make_unique<KeyboardInput>(gattApplication->keyboardService());
+    if (!bus.registerObject("/org/asteroidos/HidKeyboard", keyboardInput.get(),
                             QDBusConnection::ExportAllSlots | QDBusConnection::ExportAllSignals)) {
         qCritical() << "Cannot export keyboard D-Bus API:" << bus.lastError().message();
         return 1;
@@ -69,7 +70,12 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    auto bluez = std::make_unique<BlueZManager>(gattApplication.getPath(), advertisement.getPath());
+    auto bluez = std::make_unique<BlueZManager>(
+        gattApplication->getPath(), advertisement->getPath());
+    QObject::connect(gattApplication.get(), &QObject::destroyed,
+                     bluez.get(), &BlueZManager::unregisterApplication);
+    QObject::connect(advertisement.get(), &QObject::destroyed,
+                     bluez.get(), &BlueZManager::unregisterAdvertisement);
     QTimer shutdownPoll;
     QObject::connect(&shutdownPoll, &QTimer::timeout, &app, [&app] {
         if (shutdownRequested)
@@ -78,8 +84,11 @@ int main(int argc, char **argv)
     shutdownPoll.start(100);
 
     const int result = app.exec();
-    bluez.reset();
     bus.unregisterObject("/org/asteroidos/HidKeyboard");
+    keyboardInput.reset();
+    advertisement.reset();
+    gattApplication.reset();
+    bluez.reset();
     bus.unregisterService(keyboardBusName);
     return result;
 }

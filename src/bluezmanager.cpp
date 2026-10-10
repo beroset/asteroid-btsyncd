@@ -42,7 +42,8 @@ BlueZManager::BlueZManager(QDBusObjectPath appPath, QDBusObjectPath advertPath, 
 
     mRemoteFeatures = RemoteFeatureRegistry::instance().createAll();
 
-    mWatcher = new QDBusServiceWatcher(BLUEZ_SERVICE_NAME, QDBusConnection::systemBus());
+    mWatcher = new QDBusServiceWatcher(BLUEZ_SERVICE_NAME, QDBusConnection::systemBus(),
+                                       QDBusServiceWatcher::WatchForOwnerChange, this);
     connect(mWatcher, SIGNAL(serviceRegistered(const QString&)), this, SLOT(serviceRegistered(const QString&)));
     connect(mWatcher, SIGNAL(serviceUnregistered(const QString&)), this, SLOT(serviceUnregistered(const QString&)));
 
@@ -57,19 +58,25 @@ BlueZManager::BlueZManager(QDBusObjectPath appPath, QDBusObjectPath advertPath, 
         serviceUnregistered(BLUEZ_SERVICE_NAME);
 }
 
-BlueZManager::~BlueZManager()
+void BlueZManager::unregisterAdvertisement()
 {
     if (mAdapter.isEmpty() || mAdapter == "adapter")
         return;
 
     QDBusInterface adManager(BLUEZ_SERVICE_NAME, mAdapter, LE_ADVERTISING_MANAGER_IFACE, mBus);
     QDBusReply<void> adReply = adManager.call("UnregisterAdvertisement", QVariant::fromValue(mAdvertPath));
-    if (adReply.isError())
+    if (!adReply.isValid())
         qWarning() << "UnregisterAdvertisement failed:" << adReply.error().message();
+}
+
+void BlueZManager::unregisterApplication()
+{
+    if (mAdapter.isEmpty() || mAdapter == "adapter")
+        return;
 
     QDBusInterface serviceManager(BLUEZ_SERVICE_NAME, mAdapter, GATT_MANAGER_IFACE, mBus);
     QDBusReply<void> appReply = serviceManager.call("UnregisterApplication", QVariant::fromValue(mAppPath));
-    if (appReply.isError())
+    if (!appReply.isValid())
         qWarning() << "UnregisterApplication failed:" << appReply.error().message();
 }
 

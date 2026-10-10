@@ -35,7 +35,6 @@ class BlueZManager : public QObject
     Q_OBJECT
 public:
     explicit BlueZManager(QDBusObjectPath appPath, QDBusObjectPath advertPath, QObject *parent = nullptr);
-    ~BlueZManager() override;
     void updateConnected();
 
 private:
@@ -66,6 +65,8 @@ public slots:
     void onConnectedChanged();
     void onServicesResolvedChanged();
     void onAdapterChanged();
+    void unregisterApplication();
+    void unregisterAdvertisement();
 };
 
 #endif // BLUEZMANAGER_H
