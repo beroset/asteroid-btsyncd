@@ -37,6 +37,22 @@ inline constexpr unsigned char LedReservedMask =
 inline constexpr int OutputReportSize = 1;
 inline constexpr unsigned char InputReportType = 1;
 inline constexpr unsigned char OutputReportType = 2;
+inline constexpr unsigned char SuspendControlPointValue = 0;
+inline constexpr unsigned char ExitSuspendControlPointValue = 1;
+inline constexpr unsigned char BootProtocolMode = 0;
+inline constexpr unsigned char ReportProtocolMode = 1;
+
+inline bool isValidControlPoint(const QByteArray &value)
+{
+    return value.size() == 1
+        && static_cast<unsigned char>(value.at(0)) <= ExitSuspendControlPointValue;
+}
+
+inline bool isValidProtocolMode(const QByteArray &value)
+{
+    return value.size() == 1
+        && static_cast<unsigned char>(value.at(0)) <= ReportProtocolMode;
+}
 
 inline bool isValidKeyState(const QByteArray &state)
 {

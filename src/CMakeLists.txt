@@ -117,9 +117,9 @@ set(
 
 add_executable(asteroid-hid-keyboard ${HID_KEYBOARD_SRC} ${HID_KEYBOARD_HEADERS})
 target_include_directories(asteroid-hid-keyboard PRIVATE remote)
-target_compile_features(asteroid-hid-keyboard PRIVATE cxx_std_23)
+target_compile_features(asteroid-hid-keyboard PRIVATE cxx_std_17)
 set_target_properties(asteroid-hid-keyboard PROPERTIES
-    CXX_STANDARD 23
+    CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF
 )
@@ -146,5 +146,6 @@ if(BUILD_TESTING)
     target_include_directories(keyboardreports-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     target_link_libraries(keyboardreports-test PRIVATE Qt6::Test)
     set_target_properties(keyboardreports-test PROPERTIES AUTOMOC ON)
+    target_compile_features(keyboardreports-test PRIVATE cxx_std_17)
     add_test(NAME keyboardreports COMMAND keyboardreports-test)
 endif()

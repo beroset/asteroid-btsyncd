@@ -126,16 +126,19 @@ public:
 
     QByteArray ReadValue(QVariantMap) override
     {
-        return QByteArray(1, mKeyboard->bootProtocol() ? 0 : 1);
+        return QByteArray(1, mKeyboard->bootProtocol()
+                                 ? KeyboardReports::BootProtocolMode
+                                 : KeyboardReports::ReportProtocolMode);
     }
 
     void WriteValue(QByteArray value, QVariantMap) override
     {
-        if (value.size() != 1 || static_cast<unsigned char>(value.at(0)) > 1) {
+        if (!KeyboardReports::isValidProtocolMode(value)) {
             qWarning() << "Ignoring invalid HID Protocol Mode";
             return;
         }
-        mKeyboard->setBootProtocol(value.at(0) == 0);
+        mKeyboard->setBootProtocol(static_cast<unsigned char>(value.at(0))
+                                   == KeyboardReports::BootProtocolMode);
     }
 
 private:
@@ -174,11 +177,12 @@ HidKeyboardService::HidKeyboardService(int index, QDBusConnection bus, QObject *
     addCharacteristic(new WritableCharacteristic(
         bus, 2, HID_CONTROL_POINT_UUID, {"encrypt-authenticated-write", "write-without-response"},
         this, [this](const QByteArray &value) {
-            if (value.size() != 1 || static_cast<unsigned char>(value.at(0)) > 1) {
+            if (!KeyboardReports::isValidControlPoint(value)) {
                 qWarning() << "Ignoring malformed HID Control Point write";
                 return;
             }
-            setSuspended(value.at(0) == 0);
+            setSuspended(static_cast<unsigned char>(value.at(0))
+                         == KeyboardReports::SuspendControlPointValue);
         }));
 
     addCharacteristic(new ProtocolModeCharacteristic(bus, 3, this, this));

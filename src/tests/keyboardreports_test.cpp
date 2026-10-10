@@ -55,6 +55,26 @@ private slots:
         QVERIFY(!KeyboardReports::isValidBootOutput(QByteArray::fromHex("1f00")));
         QVERIFY(!KeyboardReports::isValidBootOutput(QByteArray::fromHex("e0")));
     }
+
+    void controlPointValidation()
+    {
+        QVERIFY(KeyboardReports::isValidControlPoint(QByteArray::fromHex("00")));
+        QVERIFY(KeyboardReports::isValidControlPoint(QByteArray::fromHex("01")));
+        QVERIFY(!KeyboardReports::isValidControlPoint(QByteArray()));
+        QVERIFY(!KeyboardReports::isValidControlPoint(QByteArray::fromHex("0000")));
+        QVERIFY(!KeyboardReports::isValidControlPoint(QByteArray::fromHex("02")));
+    }
+
+    void protocolModeValidation()
+    {
+        QVERIFY(KeyboardReports::isValidProtocolMode(
+            QByteArray(1, KeyboardReports::BootProtocolMode)));
+        QVERIFY(KeyboardReports::isValidProtocolMode(
+            QByteArray(1, KeyboardReports::ReportProtocolMode)));
+        QVERIFY(!KeyboardReports::isValidProtocolMode(QByteArray()));
+        QVERIFY(!KeyboardReports::isValidProtocolMode(QByteArray::fromHex("0100")));
+        QVERIFY(!KeyboardReports::isValidProtocolMode(QByteArray::fromHex("02")));
+    }
 };
 
 QTEST_APPLESS_MAIN(KeyboardReportsTest)
